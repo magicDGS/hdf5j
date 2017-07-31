@@ -1,6 +1,6 @@
 package org.magicdgs.hdf5j.utils;
 
-import org.magicdgs.hdf5j.fileformat.level0.superblock.Superblock;
+import org.magicdgs.hdf5j.fileformat.level0.Superblock;
 import org.magicdgs.hdf5j.io.address.FileAddress;
 
 /**

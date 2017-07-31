@@ -1,15 +1,11 @@
-package org.magicdgs.hdf5j.fileformat.level0.superblock;
+package org.magicdgs.hdf5j.fileformat.level0;
 
-import org.magicdgs.hdf5j.HDF5Constants;
 import org.magicdgs.hdf5j.io.address.FileAddress;
-
-import java.io.IOException;
-import java.math.BigInteger;
-import java.nio.channels.SeekableByteChannel;
 
 /**
  * Superblock interface for Superbloc. Note that the Format Signature is not included in
- * this layout, because it is represented by the constant {@link HDF5Constants#FORMAT_SIGNATURE}.
+ * this layout, because it is represented by the constant
+ * {@link org.magicdgs.hdf5j.HDF5Constants#FORMAT_SIGNATURE}.
  *
  * <p>The superblock may begin at certain predefined offsets within the HDF5 file, allowing a block
  * of unspecified content for users to place additional information at the beginning (and end) of
@@ -48,36 +44,6 @@ import java.nio.channels.SeekableByteChannel;
 public interface Superblock {
 
     /**
-     * The only value currently valid in the <b>Version Number of the File’s Free Space
-     * Information</b> field is ‘0’, which indicates that the file’s free space is as described in
-     * <b>Free-space Manager</b>.
-     *
-     * @see #getFreeSpaceManagerVersionNumber().
-     */
-    // TODO: add link to Free-space Manager class once it is implemented
-    public static final int FREE_SPACE_MANAGER_VERSION_NUMBER = 0;
-
-    /**
-     * The only value currently valid in the <b>Version Number of the Root Group Symbol Table
-     * Entry</b> field is ‘0’, which indicates that the root group symbol table entry is formatted
-     * as described in <b>Symbol Table Entry</b>.
-     *
-     * @see #getRootSymbolTableEntryVersionNumber().
-     */
-    // TODO: add link to Symbol Table Entry class once it is implemented
-    public static final int ROOT_SYMBOL_TABLE_ENTRY_VERSION_NUMBER = 0;
-
-    /**
-     * The only value currently valid in the <b>Version Number of the Shared Header Message
-     * Format</b> field is ‘0’, which indicates that shared header messages are formatted as
-     * described in <b>Data Object Header Messages</b>.
-     *
-     * @see #getSharedHeaderMessageFormatVersionNumber().
-     */
-    // TODO: add link to Data Object Header Messages class once it is implemented
-    public static final int SHARED_HEADER_MESSAGE_FORMAT_VERSION_NUMBER = 0;
-
-    /**
      * Gets the <b>Version Number of the Superblock</b>.
      *
      * <p>This value is used to determine the format of the information in the superblock. When the
@@ -98,7 +64,8 @@ public interface Superblock {
      *
      * <p>This value is used to determine the format of the file’s free space information.
      *
-     * <p>The only value currently valid in this field is {@link #FREE_SPACE_MANAGER_VERSION_NUMBER}.
+     * <p>The only value currently valid in this field is
+     * {@link org.magicdgs.hdf5j.HDF5Constants#FREE_SPACE_MANAGER_VERSION_NUMBER}.
      *
      * <p>This field is present in versions 0 and 1 of the superblock.
      *
@@ -107,7 +74,7 @@ public interface Superblock {
      * @throws org.magicdgs.hdf5j.utils.HDF5jException.SuperblockVersionException if the version
      *                                                                            does not support
      *                                                                            this field.
-     * @see #FREE_SPACE_MANAGER_VERSION_NUMBER
+     * @see org.magicdgs.hdf5j.HDF5Constants#FREE_SPACE_MANAGER_VERSION_NUMBER
      */
     // TODO: add link to Free-space Manager class once it is implemented
     public int getFreeSpaceManagerVersionNumber();
@@ -120,16 +87,18 @@ public interface Superblock {
      * is incremented to the next integer and can be used to determine how the information in the
      * field is formatted.
      *
-     * <p>The only value currently valid in this field is {@link #ROOT_SYMBOL_TABLE_ENTRY_VERSION_NUMBER}.
+     * <p>The only value currently valid in this field is
+     * {@link org.magicdgs.hdf5j.HDF5Constants#ROOT_SYMBOL_TABLE_ENTRY_VERSION_NUMBER}.
      *
      * <p>This field is present in version 0 and 1 of the superblock.
      *
-     * @return if present, unsigned byte representing the version number for the root symbol table entry.
+     * @return if present, unsigned byte representing the version number for the root symbol table
+     * entry.
      *
      * @throws org.magicdgs.hdf5j.utils.HDF5jException.SuperblockVersionException if the version
      *                                                                            does not support
      *                                                                            this field.
-     * @see #ROOT_SYMBOL_TABLE_ENTRY_VERSION_NUMBER
+     * @see org.magicdgs.hdf5j.HDF5Constants#ROOT_SYMBOL_TABLE_ENTRY_VERSION_NUMBER
      */
     // TODO: add link to Symbol Table Entry class once it is implemented
     public int getRootSymbolTableEntryVersionNumber();
@@ -138,11 +107,13 @@ public interface Superblock {
      * Gets the <b>Version Number of the Shared Header Message Format</b>.
      *
      * <p>This value is used to determine the format of the information in a shared object header
-     * message. Since the format of the shared header messages differs from the other private header
+     * message. Since the format of the shared header messages differs from the other private
+     * header
      * messages, a version number is used to identify changes in the format.
      *
-     * <p>The only value currently valid in this field is ‘0’, which indicates that shared header
-     * messages are formatted as described below.
+     * <p>The only value currently valid in this field is
+     * {@link org.magicdgs.hdf5j.HDF5Constants#SHARED_HEADER_MESSAGE_FORMAT_VERSION_NUMBER},
+     * which indicates that shared header messages are formatted as described below.
      *
      * <p>This field is present in version 0 and 1 of the superblock.
      *
@@ -152,7 +123,7 @@ public interface Superblock {
      * @throws org.magicdgs.hdf5j.utils.HDF5jException.SuperblockVersionException if the version
      *                                                                            does not support
      *                                                                            this field.
-     * @see #SHARED_HEADER_MESSAGE_FORMAT_VERSION_NUMBER
+     * @see org.magicdgs.hdf5j.HDF5Constants#SHARED_HEADER_MESSAGE_FORMAT_VERSION_NUMBER
      */
     // TODO: add link to Data Object Header Messages class once it is implemented
     public int getSharedHeaderMessageFormatVersionNumber();
@@ -192,7 +163,8 @@ public interface Superblock {
      *
      * <p>This field is present in version 0 and 1 of the superblock.
      *
-     * @return unsigned byte used for compute the minimum and maximum number of entries in a B-Tree group.
+     * @return unsigned byte used for compute the minimum and maximum number of entries in a B-Tree
+     * group.
      *
      * @throws org.magicdgs.hdf5j.utils.HDF5jException.SuperblockVersionException if the version
      *                                                                            does not support
@@ -293,8 +265,6 @@ public interface Superblock {
      * <p>This field is present in version 0+ of the superblock.
      *
      * @return address of the first byte of the HDF5 data.
-     *
-     * @implNote the return type is a {@link BigInteger} to encapsulate the {@code byte[]} with
      */
     public FileAddress getBaseAddress();
 
@@ -381,7 +351,7 @@ public interface Superblock {
     public FileAddress getSuperblockExtensionAddress();
 
     /**
-     * Gets the <b>Root Group Object Header Address</b>-
+     * Gets the <b>Root Group Object Header Address</b>.
      *
      * This is the address of the root group object header, which serves as the entry point into the
      * group graph for the file.
@@ -398,7 +368,8 @@ public interface Superblock {
     public FileAddress getRootGroupObjectHeaderAddress();
 
     /**
-     * Gets the <b>Superblock Checksum</b>.
+     * Gets the <b>Superblock Checksum</b>. This checksum is computed using the Jenkins’ lookup3
+     * algorithm (implemented in {@link org.magicdgs.hdf5j.utils.hashing.Lookup3HashFunction}).
      *
      * <p>The checksum for the superblock.
      *
@@ -410,17 +381,6 @@ public interface Superblock {
      *                                                                            does not support
      *                                                                            this field.
      */
-    // TODO: document that it should be computed using the Jenkins’ lookup3 algorithm
     public int getSuperblockChecksum();
-
-
-    /**
-     * Writes the superblock to the byte channel in little-endian order.
-     *
-     * @param byteChannel channel for writing the superblock.
-     *
-     * @throws IOException if an IO error occurs.
-     */
-    public void write(final SeekableByteChannel byteChannel) throws IOException;
 
 }
