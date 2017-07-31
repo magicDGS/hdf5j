@@ -1,0 +1,82 @@
+// Dependencies for the buildscript
+buildscript {
+    repositories {
+        mavenCentral()
+        // gitsemver plugin repository
+        maven {
+            url "http://dl.bintray.com/palantir/releases"
+        }
+    }
+    // gitsemver plugin dependency
+    dependencies {
+        classpath 'com.palantir:gradle-gitsemver:0.7.2'
+    }
+}
+
+// PLUGINS
+// add support for Java
+apply plugin: 'java'
+// semantic versioning
+apply plugin: 'gitsemver'
+// Apply the custom jacoco coverage plugin
+apply from: 'gradle/jacoco.coverage.gradle'
+
+group = 'org.magicdgs'
+
+version semverVersion()
+description = """HDF5 java Implementation"""
+
+// library dependencies
+repositories {
+    jcenter()
+    mavenCentral()
+}
+
+dependencies {
+    // for logging, we use the SLF4J API
+    compile "org.slf4j:slf4j-api:1.7.25"
+    // for common utilities, we use guava (eg little-endian and hashing)
+    compile "com.google.guava:guava:22.0"
+
+    // use TestNG for testing
+    testCompile "org.testng:testng:6.11"
+}
+
+// for managing the wrapper task
+task wrapper(type: Wrapper) {
+    gradleVersion = '4.0.2'
+}
+
+// test task
+tasks.withType(Test) {
+
+    // tests could be always re-run
+    outputs.upToDateWhen { false }
+
+    useTestNG()
+
+    // do not show the stdout/stderr of the test JVM(s) on the console
+    testLogging.showStandardStreams = false
+
+    // set heap size for the test JVM(s)
+    minHeapSize = "1G"
+    maxHeapSize = "2G"
+
+    // log the test that is running
+    beforeTest { descriptor ->
+        logger.lifecycle("Running Test: " +  descriptor)
+    }
+
+    // logging after the tests
+    testLogging {
+        testLogging {
+            events "skipped", "failed"
+            exceptionFormat = "full"
+        }
+        afterSuite { desc, result ->
+            if (!desc.parent) { // will match the outermost suite
+                println "Results: ${result.resultType} (${result.testCount} tests, ${result.successfulTestCount} successes, ${result.failedTestCount} failures, ${result.skippedTestCount} skipped)"
+            }
+        }
+    }
+}
