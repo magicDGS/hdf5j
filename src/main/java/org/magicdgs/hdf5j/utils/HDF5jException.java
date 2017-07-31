@@ -1,5 +1,6 @@
 package org.magicdgs.hdf5j.utils;
 
+import org.magicdgs.hdf5j.fileformat.level0.superblock.Superblock;
 import org.magicdgs.hdf5j.io.address.FileAddress;
 
 /**
@@ -24,6 +25,18 @@ public class HDF5jException extends RuntimeException {
 
         public FileAddressException(final FileAddress address, final String msg) {
             this(String.format("%s %s", address, msg));
+        }
+    }
+
+    /**
+     * Exception class for issues related with the Superblock version.
+     *
+     * @see Superblock
+     */
+    public static class SuperblockVersionException extends HDF5jException {
+
+        public SuperblockVersionException(final Superblock superblock, String msg) {
+            super(String.format("Superblock version %s: %s", superblock.getVersionNumber(), msg));
         }
     }
 
