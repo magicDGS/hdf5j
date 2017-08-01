@@ -1,11 +1,15 @@
 package org.magicdgs.hdf5j;
 
+import com.google.common.primitives.Bytes;
 import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
+import org.testng.internal.collections.Ints;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.Writer;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -27,9 +31,43 @@ public class HDF5UtilsTest extends HDF5jTest {
         tmpDir = Files.createTempDirectory(this.getClass().getName());
     }
 
-    @Test(enabled = false)
-    public void testIsHDF5Stream() throws Exception {
+    @DataProvider
+    public Object[][] invalidStreams() {
+        return new Object[][] {
+                // null stream should throw
+                {null, NullPointerException.class},
+                // also stream without mark support (default for InputStream abstract class)
+                {new InputStream() {
+                    @Override
+                    public int read() throws IOException {
+                        return 0;
+                    }
+                }, IllegalArgumentException.class}
+        };
+    }
 
+    @Test(dataProvider = "invalidStreams")
+    public void testIsHDF5StreamInvalid(final InputStream invalidStream,
+            final Class<? extends Throwable> e) throws Exception {
+        Assert.assertThrows(e, () -> HDF5Utils.isHDF5Stream(invalidStream));
+    }
+
+    @Test
+    public void testIsHDF5Stream() throws Exception {
+        // HDF5 stream
+        final InputStream hdf5SignatureStream = new ByteArrayInputStream(
+                Bytes.toArray(Ints.asList(HDF5Constants.FORMAT_SIGNATURE)));
+        // check that a stream with the HDF5 signature returns true
+        Assert.assertTrue(HDF5Utils.isHDF5Stream(hdf5SignatureStream));
+        // and because it is not consumed, it could be passed again
+        Assert.assertTrue(HDF5Utils.isHDF5Stream(hdf5SignatureStream));
+
+        // Text stream
+        final InputStream textStream = new ByteArrayInputStream("ABCD".getBytes());
+        // check that some text is not HDF5 stream
+        Assert.assertFalse(HDF5Utils.isHDF5Stream(textStream));
+        // check that still could be read
+        Assert.assertEquals(textStream.read(), 'A');
     }
 
     @DataProvider
@@ -52,7 +90,7 @@ public class HDF5UtilsTest extends HDF5jTest {
 
     }
 
-    private final Path createTempFileWithContent(final String name, final String content)
+    private Path createTempFileWithContent(final String name, final String content)
             throws IOException {
         final Path path = Files.createFile(tmpDir.resolve(name));
         try (final Writer os = Files.newBufferedWriter(path)) {
