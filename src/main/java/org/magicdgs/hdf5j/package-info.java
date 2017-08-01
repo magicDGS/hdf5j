@@ -1,5 +1,5 @@
 /**
- * HDF5 java Implementation.
+ * HDF5j: Java Implementation for HDF5.
  *
  * @author Daniel Gomez-Sanchez (magicDGS)
  */
