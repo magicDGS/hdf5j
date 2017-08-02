@@ -2,6 +2,7 @@ package org.magicdgs.hdf5j;
 
 import com.google.common.primitives.Bytes;
 import org.testng.Assert;
+import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
@@ -11,9 +12,11 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Writer;
+import java.nio.file.FileVisitOption;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 
@@ -28,6 +31,22 @@ public class HDF5UtilsTest extends HDF5jTest {
     @BeforeClass
     public void setUp() throws IOException {
         tmpDir = Files.createTempDirectory(this.getClass().getName());
+    }
+
+    @AfterClass
+    public void tearDown() throws IOException {
+        // clean the temp directory
+        Files.walk(tmpDir)
+                // directories last
+                .sorted(Comparator.reverseOrder())
+                .forEach(p -> {
+                    try {
+                        Files.delete(p);
+                    } catch (IOException e) {
+                        // rethrow as a runtime exception
+                        throw new RuntimeException(e);
+                    }
+                });
     }
 
     @DataProvider

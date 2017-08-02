@@ -19,7 +19,7 @@ public final class HDF5Utils {
     private HDF5Utils() {}
 
     /**
-     * Check if the beginning of an {@link InputStream} is in the HDF5 format; that is, starts with
+     * Checks if the beginning of an {@link InputStream} is in the HDF5 format; that is, starts with
      * the {@link HDF5Constants#FORMAT_SIGNATURE}.
      *
      * @param inputStream input stream with mark support.
@@ -43,7 +43,7 @@ public final class HDF5Utils {
     }
 
     /**
-     * Check if the start of the file is an HDF5 formatted file; that is, it starts with the
+     * Checks if the start of the file is an HDF5 formatted file; that is, it starts with the
      * {@link HDF5Constants#FORMAT_SIGNATURE}.
      *
      * @param path file to check.
