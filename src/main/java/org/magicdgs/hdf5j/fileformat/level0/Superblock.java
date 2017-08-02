@@ -1,8 +1,15 @@
 package org.magicdgs.hdf5j.fileformat.level0;
 
+import org.magicdgs.hdf5j.HDF5Constants;
+import org.magicdgs.hdf5j.HDF5Utils;
+
+import com.google.common.base.Preconditions;
 import com.google.common.io.LittleEndianDataInputStream;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.math.BigInteger;
 
 /**
  * Common layout for the Level 0A - Superblock. Note that the Format Signature is not included in
@@ -10,8 +17,46 @@ import java.io.IOException;
  * {@link org.magicdgs.hdf5j.HDF5Constants#FORMAT_SIGNATURE}.
  *
  * @author Daniel Gomez-Sanchez (magicDGS)
+ * @implNote all byte/short fields returns an {@link int} because they are represented as unsigned
+ * bytes.
  */
-public abstract class Superblock {
+public class Superblock {
+
+    // TODO: documentation
+    // only valid value for Free Space Manager Version Number (only for version 0 and 1)
+    public static final int FREE_SPACE_MANAGER_VERSION_NUMBER = 0;
+    // only valid value for Root Symbol Table Entry Version Number (only for version 0 and 1)
+    public static final int ROOT_SYMBOL_TABLE_ENTRY_VERSION_NUMBER = 0;
+    // only valid value for Shared Header Message Format Version Number (only for version 0 and 1)
+    public static final int SHARED_HEADER_MESSAGE_FORMAT_VERSION_NUMBER = 0;
+
+    /** Logger for the current superblock. */
+    protected final Logger logger = LoggerFactory.getLogger(this.getClass());
+
+    // always present fields
+    private final int version;
+    private final int sizeOfOffsets;
+    private final int sizeOfLengths;
+
+    // present for all, but different definitions
+    private final int fileConsistencyFlags;
+
+    // addresses stored as BigInteger constructed with a byte[] read in a little-endian order
+    // common addresses
+    private final BigInteger baseAddress;
+    private final BigInteger endOfFileAddress;
+
+    Superblock(final int version, final int sizeOfOffsets, final int sizeOfLengths,
+            final int fileConsistencyFlags, final BigInteger baseAddress,
+            final BigInteger endOfFileAddress) {
+        this.version = version;
+        this.sizeOfOffsets = sizeOfOffsets;
+        this.sizeOfLengths = sizeOfLengths;
+        this.fileConsistencyFlags = fileConsistencyFlags;
+        this.baseAddress = baseAddress;
+        this.endOfFileAddress = endOfFileAddress;
+    }
+
 
     /**
      * Reads the Superblock from a data input (in little-endian format), starting from the provided
@@ -23,21 +68,134 @@ public abstract class Superblock {
      *
      * @throws IOException if an IO error occurs
      */
-    public Superblock(final LittleEndianDataInputStream dataInput, final long offset)
+    public static Superblock readFromDataInputStream(final LittleEndianDataInputStream dataInput,
+            final long offset)
             throws IOException {
+        Preconditions.checkArgument(dataInput != null, "null data input stream");
+        // TODO: should this be a warning?
+        Preconditions.checkArgument(dataInput.skip(offset) == offset,
+                "skipped different number of bytes from the file");
+        Preconditions.checkArgument(HDF5Utils.isHDF5Stream(dataInput),
+                "input stream should have the HDF5 signature");
+        // skip the bytes of the signature (ignore because it was already tested)
+        dataInput.skip(HDF5Constants.FORMAT_SIGNATURE.length);
 
+        // start parsing
+        final int version = dataInput.readUnsignedByte();
+        // set the variables
+        final int sizeOfOffsets;
+        final int sizeOfLengths;
+        final int groupInternalNodeK;
+        final int groupLeafNodeK;
+        final int fileConsistencyFlags;
+        final int indexedStorageInternalNodeK;
+        final BigInteger baseAddress;
+        final BigInteger addressOfGlobalFreeSpaceIndexOrSuperblockExtensionAddress;
+        final BigInteger endOfFileAddress;
+        final BigInteger driverInformationBlockAddressOrRootGroupObjectHeaderAddress;
+        final int rootGroupSymbolTableEntryOrSuperblockChecksum;
+
+
+        // next bytes are only present in version 0 and 1
+        if (version < 2) {
+            // only check if the value of the unsigned byte is correct for the Free Space Manager, Root Symbol Table Entry and Shared Header Message
+            Preconditions.checkArgument(
+                    FREE_SPACE_MANAGER_VERSION_NUMBER == dataInput.readUnsignedByte(),
+                    "Invalid value at Free Space Manager Version Number byte");
+            Preconditions.checkArgument(
+                    ROOT_SYMBOL_TABLE_ENTRY_VERSION_NUMBER == dataInput.readUnsignedByte(),
+                    "Invalid value at Root Symbol Table Entry Version Number byte");
+            // reserved byte (should be 0) TODO: should we check?
+            dataInput.readUnsignedByte();
+            Preconditions.checkArgument(
+                    SHARED_HEADER_MESSAGE_FORMAT_VERSION_NUMBER == dataInput.readUnsignedByte(),
+                    "Invalid value at Shared Header Message Format Version Number byte");
+        }
+        // next bytes are in the same order for all versions
+        sizeOfOffsets = dataInput.readUnsignedByte();
+        sizeOfLengths = dataInput.readUnsignedByte();
+        // for versions 0 and 1, and 2 and 3, there is divergence here
+        if (version < 2) {
+            // version 0 and 1
+            // reserved byte
+            dataInput.readUnsignedByte();
+            // nodes are 2 bytes (short)  TODO: we are reading it as unsigned, but it is true?
+            groupLeafNodeK = dataInput.readUnsignedShort();
+            Preconditions.checkArgument(groupLeafNodeK > 0,
+                    "Group Leaf Node K should be larger than 0: %s", groupLeafNodeK);
+            groupInternalNodeK = dataInput.readUnsignedByte();
+            Preconditions.checkArgument(groupInternalNodeK > 0,
+                    "Group Internal Node K should be larger than 0: %s", groupInternalNodeK);
+            // read the file consistency tags (for this version, it has a length of 4 bytes - that's it, integer)
+            fileConsistencyFlags = dataInput.readInt();
+        } else {
+            // mark as unset the Group Leaf Node K and Group Internal Node K
+            groupLeafNodeK = 0;
+            groupInternalNodeK = 0;
+            // read the file consistency tags (only valid for version 3)
+            fileConsistencyFlags = dataInput.readUnsignedByte();
+        }
+        // indexedStorageInternalNodeK only for version 1
+        if (version == 1) {
+            // 2 bytes
+            indexedStorageInternalNodeK = dataInput.readUnsignedShort();
+            Preconditions.checkArgument(indexedStorageInternalNodeK > 0,
+                    "Index Storage Internal Node K should be larger than 0: %s",
+                    indexedStorageInternalNodeK);
+            // and ignore the next 2 bytes
+            dataInput.readUnsignedShort();
+        } else {
+            // mark as unset
+            indexedStorageInternalNodeK = -1;
+        }
+        // reading addresses  TODO: adjust based on the offset?
+        // base address
+        baseAddress = readLittleEndianBigInteger(dataInput, sizeOfOffsets);
+        // for version 0 and 1, free space address; for version 2 and 3, superblock extension address
+        addressOfGlobalFreeSpaceIndexOrSuperblockExtensionAddress =
+                readLittleEndianBigInteger(dataInput, sizeOfOffsets);
+        // now it comes the end of file address
+        endOfFileAddress = readLittleEndianBigInteger(dataInput, sizeOfOffsets);
+        // for version 0 and 1, driver information block address; for version 2 and 3, superblock extension address
+        driverInformationBlockAddressOrRootGroupObjectHeaderAddress =
+                readLittleEndianBigInteger(dataInput, sizeOfOffsets);
+
+        // read the last bytes of the superblock (integer value)
+        rootGroupSymbolTableEntryOrSuperblockChecksum = dataInput.readInt();
+
+        switch (version) {
+            case 0:
+                new SuperblockVersion0or1.SuperblockVersion0(sizeOfOffsets, sizeOfLengths,
+                        fileConsistencyFlags, baseAddress, endOfFileAddress,
+                        addressOfGlobalFreeSpaceIndexOrSuperblockExtensionAddress,
+                        driverInformationBlockAddressOrRootGroupObjectHeaderAddress, groupLeafNodeK,
+                        groupInternalNodeK, rootGroupSymbolTableEntryOrSuperblockChecksum);
+            case 1:
+                new SuperblockVersion0or1.SuperblockVersion1(sizeOfOffsets, sizeOfLengths,
+                        fileConsistencyFlags, baseAddress, endOfFileAddress,
+                        addressOfGlobalFreeSpaceIndexOrSuperblockExtensionAddress,
+                        driverInformationBlockAddressOrRootGroupObjectHeaderAddress, groupLeafNodeK,
+                        groupInternalNodeK, rootGroupSymbolTableEntryOrSuperblockChecksum,
+                        indexedStorageInternalNodeK);
+            case 2:
+                new SuperblockVersion2(sizeOfOffsets, sizeOfLengths, fileConsistencyFlags,
+                        baseAddress, endOfFileAddress,
+                        addressOfGlobalFreeSpaceIndexOrSuperblockExtensionAddress,
+                        driverInformationBlockAddressOrRootGroupObjectHeaderAddress,
+                        rootGroupSymbolTableEntryOrSuperblockChecksum);
+            default:
+                throw new IllegalArgumentException("Unknown version");
+        }
     }
 
-    /**
-     * Reads the Superblock from a data input (in little-endian format), starting at the current
-     * position.
-     *
-     * @param dataInput input data (little-endian).
-     *
-     * @throws IOException if an IO error occurs
-     */
-    public Superblock(final LittleEndianDataInputStream dataInput) throws IOException {
-        this(dataInput, 0);
+    // reads a little-endian input into a BigInteger
+    private static BigInteger readLittleEndianBigInteger(
+            final LittleEndianDataInputStream dataInput, final int size) throws IOException {
+        final byte[] littleEndian = new byte[size];
+        for (int i = size - 1; i <= 0; i--) {
+            littleEndian[i] = dataInput.readByte();
+        }
+        return new BigInteger(littleEndian);
     }
 
     /**
@@ -50,7 +208,10 @@ public abstract class Superblock {
      *
      * <p>This field is present in version 0+ of the superblock.
      */
-    public abstract byte getVersionNumber(); // spans 1 byte
+    public int getVersionNumber() {
+        // spans 1 byte, but it is unsigned
+        return version;
+    }
 
     /**
      * This value is used to determine the format of the file’s free space information.
@@ -60,7 +221,11 @@ public abstract class Superblock {
      *
      * <p>This field is present in versions 0 and 1 of the superblock.
      */
-    public abstract byte getFreeSpaceManagerVersionNumber(); // spans 1 byte
+    public int getFreeSpaceManagerVersionNumber() {
+        // TODO: document exception
+        throw new UnsupportedOperationException(
+                "Free Space Manager Version Number is not present for version " + version);
+    }
 
     /**
      * This value is used to determine the format of the information in the Root Group Symbol Table
@@ -73,7 +238,11 @@ public abstract class Superblock {
      *
      * <p>This field is present in version 0 and 1 of the superblock.
      */
-    public abstract byte getRootSymbolTableEntryVersionNumber(); // spans 1 byte
+    public int getRootSymbolTableEntryVersionNumber() {
+        // TODO: document exception
+        throw new UnsupportedOperationException(
+                "Free Space Manager Version Number is not present for version " + version);
+    }
 
     /**
      * This value is used to determine the format of the information in a shared object header
@@ -85,7 +254,11 @@ public abstract class Superblock {
      *
      * <p>This field is present in version 0 and 1 of the superblock.
      */
-    public abstract byte getSharedHeaderMessageFormat(); // spans 1 byte
+    public int getSharedHeaderMessageFormatVersionNumber() {
+        // TODO: document exception
+        throw new UnsupportedOperationException(
+                "Free Space Manager Version Number is not present for version " + version);
+    }
 
     /**
      * This value contains the number of bytes used to store addresses in the file. The values for
@@ -95,14 +268,20 @@ public abstract class Superblock {
      *
      * <p>This field is present in version 0+ of the superblock.
      */
-    public abstract byte getSizeOfOffsets(); // spans 1 byte
+    public int getSizeOfOffsets() {
+        // spans 1 byte, but it is unsigned
+        return sizeOfOffsets;
+    }
 
     /**
      * This value contains the number of bytes used to store the size of an object.
      *
      * <p>This field is present in version 0+ of the superblock.
      */
-    public abstract byte getSizeOfLengths(); // spans 1 byte
+    public int getSizeOfLengths() {
+        // spans 1 byte, but it is unsigned
+        return sizeOfLengths;
+    }
 
     /**
      * Each leaf node of a group B-tree will have at least this many entries but not more than twice
@@ -112,7 +291,11 @@ public abstract class Superblock {
      *
      * <p>This field is present in version 0 and 1 of the superblock.
      */
-    public abstract short getGroupLeafNodeK(); // span 2 bytes (short)
+    // TODO: add @see description of B-trees
+    public int getGroupLeafNodeK() {
+        throw new UnsupportedOperationException(
+                "Group Leaf Node K is undefined for version " + version);
+    }
 
     /**
      * Each internal node of a group B-tree will have at least this many entries but not more than
@@ -123,10 +306,13 @@ public abstract class Superblock {
      * <p>This field is present in version 0 and 1 of the superblock.
      */
     // TODO: add @see description of B-trees
-    public abstract short getGroupInternalNodeK(); // span 2 bytes (short)
+    public int getGroupInternalNodeK() {
+        throw new UnsupportedOperationException(
+                "Group Leaf Node K is undefined for version " + version);
+    }
 
     /**
-     * For superblock version 0, 1 and 3: This field is unused and should be ignored.
+     * For superblock version 0, 1 and 2: This field is unused and should be ignored.
      *
      * <p>For superblock version 3: This value contains flags to ensure file consistency for file
      * locking. Currently, the following bit flags are defined:
@@ -151,7 +337,10 @@ public abstract class Superblock {
      * @implNote the only version that does not ignore this value has a size of 1 byte, so the
      * return type is byte instead of int.
      */
-    public abstract byte getFileConsistencyFlags(); // spans 1 byte for the only used version
+    public int getFileConsistencyFlags() {
+        // TODO: add a warning?
+        return fileConsistencyFlags;
+    }
 
     /**
      * Each internal node of an indexed storage B-tree will have at least this many entries but not
@@ -163,7 +352,10 @@ public abstract class Superblock {
      * <p>This field is present in version 1 of the superblock.
      */
     // TODO: add @see description of B-trees
-    public abstract short getIndexedStorageInternalNodeK(); // span 2bytes (short)
+    public int getIndexedStorageInternalNodeK() {
+        throw new UnsupportedOperationException(
+                "Indexed Storage Internal Node K is undefined for version " + version);
+    }
 
     /**
      * This is the absolute file address of the first byte of the HDF5 data within the file. The
@@ -177,10 +369,12 @@ public abstract class Superblock {
      *
      * <p>This field is present in version 0+ of the superblock.
      *
-     * @implNote returns a Number because the length of the fields depends on the {@link
-     * #getSizeOfOffsets()}.
+     * @implNote returns a {@link BigInteger} constructed with a {@code byte[]} with size
+     * {@link #getSizeOfOffsets()}.
      */
-    public abstract Number getBaseAddress();
+    public BigInteger getBaseAddress() {
+        return baseAddress;
+    }
 
     /**
      * The file’s free space is not persistent for version 0 and 1 of the superblock. Currently this
@@ -188,10 +382,13 @@ public abstract class Superblock {
      *
      * <p>This field is present in version 0 and 1 of the superblock.
      *
-     * @implNote returns a Number because the length of the fields depends on the {@link
-     * #getSizeOfOffsets()}.
+     * @implNote returns a {@link BigInteger} constructed with a {@code byte[]} with size
+     * {@link #getSizeOfOffsets()}.
      */
-    public abstract Number getAddressOfGlobalFreeSpaceIndex();
+    public BigInteger getAddressOfGlobalFreeSpaceIndex() {
+        // TODO: documentation and msg
+        throw new UnsupportedOperationException("");
+    }
 
     /**
      * This is the absolute file address of the first byte past the end of all HDF5 data. It is used
@@ -200,10 +397,12 @@ public abstract class Superblock {
      *
      * <p>This field is present in version 0+ of the superblock.
      *
-     * @implNote returns a Number because the length of the fields depends on the {@link
-     * #getSizeOfOffsets()}.
+     * @implNote returns a {@link BigInteger} constructed with a {@code byte[]} with size
+     * {@link #getSizeOfOffsets()}.
      */
-    public abstract Number getEndOfFileAddress();
+    public BigInteger getEndOfFileAddress() {
+        return endOfFileAddress;
+    }
 
     /**
      * This is the relative file address of the file driver information block which contains
@@ -212,10 +411,13 @@ public abstract class Superblock {
      *
      * <p>This field is present in version 0 and 1 of the superblock.
      *
-     * @implNote returns a Number because the length of the fields depends on the {@link
-     * #getSizeOfOffsets()}.
+     * @implNote returns a {@link BigInteger} constructed with a {@code byte[]} with size
+     * {@link #getSizeOfOffsets()}.
      */
-    public abstract Number getDriverInformationBlockAddress();
+    public BigInteger getDriverInformationBlockAddress() {
+        // TODO: document and msg
+        throw new UnsupportedOperationException("");
+    }
 
 
     /**
@@ -224,7 +426,10 @@ public abstract class Superblock {
      *
      * <p>This field is present in version 0 and 1 of the superblock.
      */
-    public abstract int getRootGroupSymbolTableEntry();
+    public int getRootGroupSymbolTableEntry() {
+        // TODO: document and msg
+        throw new UnsupportedOperationException("");
+    }
 
     /**
      * The field is the address of the object header for the superblock extension. If there is no
@@ -232,10 +437,13 @@ public abstract class Superblock {
      *
      * <p>This field is present in version 2+ of the superblock.
      *
-     * @implNote returns a Number because the length of the fields depends on the {@link
-     * #getSizeOfOffsets()}.
+     * @implNote returns a {@link BigInteger} constructed with a {@code byte[]} with size
+     * {@link #getSizeOfOffsets()}.
      */
-    public abstract Number getSuperblockExtensionAddress(); // spans 4 bytes (int)
+    public BigInteger getSuperblockExtensionAddress() {
+        // TODO: document and msg
+        throw new UnsupportedOperationException("");
+    }
 
     /**
      * This is the address of the root group object header, which serves as the entry point into the
@@ -243,15 +451,20 @@ public abstract class Superblock {
      *
      * <p>This field is present in version 2+ of the superblock.
      *
-     * @implNote returns a Number because the length of the fields depends on the {@link
-     * #getSizeOfOffsets()}.
+     * @implNote returns a long independently of the {@link #getSizeOfOffsets()}.
      */
-    public abstract Number getRootGroupObjectHeaderAddress();
+    public BigInteger getRootGroupObjectHeaderAddress() {
+        // TODO: document and msg
+        throw new UnsupportedOperationException("");
+    }
 
     /**
      * The checksum for the superblock.
      *
      * <p>This field is present in version 2+ of the superblock.
      */
-    public abstract int getSuperblockChecksum(); // spans 4 bytes (int)
+    public int getSuperblockChecksum() {
+        // TODO: document and msg
+        throw new UnsupportedOperationException("");
+    }
 }
