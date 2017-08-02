@@ -10,6 +10,8 @@ hs_err_pid*
 # InteliJ
 *.iml
 .idea*
+# 2017.2 generates the out/ folder when building the project (remove)
+out/
 
 # Eclipse
 .settings
