@@ -2,7 +2,7 @@ package org.magicdgs.hdf5j.fileformat.level0;
 
 import com.google.common.io.LittleEndianDataInputStream;
 
-import java.io.DataInputStream;
+import java.io.IOException;
 
 /**
  * Common layout for the Level 0A - Superblock. Note that the Format Signature is not included in
@@ -11,11 +11,34 @@ import java.io.DataInputStream;
  *
  * @author Daniel Gomez-Sanchez (magicDGS)
  */
-public interface Superblock {
+public abstract class Superblock {
 
-    // TODO: set the correct contract for this. Should start from the beginning of the Stream?
-    // TODO: maybe read from a Path?
-    public Superblock readFromOffset(final LittleEndianDataInputStream stream);
+    /**
+     * Reads the Superblock from a data input (in little-endian format), starting from the provided
+     * offset.
+     *
+     * @param dataInput input data (little-endian).
+     * @param offset    number of bytes to skip from the beginning of the file. If {@code 0}, start
+     *                  from the beginning of the file.
+     *
+     * @throws IOException if an IO error occurs
+     */
+    public Superblock(final LittleEndianDataInputStream dataInput, final long offset)
+            throws IOException {
+
+    }
+
+    /**
+     * Reads the Superblock from a data input (in little-endian format), starting at the current
+     * position.
+     *
+     * @param dataInput input data (little-endian).
+     *
+     * @throws IOException if an IO error occurs
+     */
+    public Superblock(final LittleEndianDataInputStream dataInput) throws IOException {
+        this(dataInput, 0);
+    }
 
     /**
      * This value is used to determine the format of the information in the superblock. When the
@@ -27,7 +50,7 @@ public interface Superblock {
      *
      * <p>This field is present in version 0+ of the superblock.
      */
-    public byte getVersionNumber(); // spans 1 byte
+    public abstract byte getVersionNumber(); // spans 1 byte
 
     /**
      * This value is used to determine the format of the file’s free space information.
@@ -37,7 +60,7 @@ public interface Superblock {
      *
      * <p>This field is present in versions 0 and 1 of the superblock.
      */
-    public byte getFreeSpaceManagerVersionNumber(); // spans 1 byte
+    public abstract byte getFreeSpaceManagerVersionNumber(); // spans 1 byte
 
     /**
      * This value is used to determine the format of the information in the Root Group Symbol Table
@@ -50,7 +73,7 @@ public interface Superblock {
      *
      * <p>This field is present in version 0 and 1 of the superblock.
      */
-    public byte getRootSymbolTableEntryVersionNumber(); // spans 1 byte
+    public abstract byte getRootSymbolTableEntryVersionNumber(); // spans 1 byte
 
     /**
      * This value is used to determine the format of the information in a shared object header
@@ -62,7 +85,7 @@ public interface Superblock {
      *
      * <p>This field is present in version 0 and 1 of the superblock.
      */
-    public byte getSharedHeaderMessageFormat(); // spans 1 byte
+    public abstract byte getSharedHeaderMessageFormat(); // spans 1 byte
 
     /**
      * This value contains the number of bytes used to store addresses in the file. The values for
@@ -72,14 +95,14 @@ public interface Superblock {
      *
      * <p>This field is present in version 0+ of the superblock.
      */
-    public byte getSizeOfOffsets(); // spans 1 byte
+    public abstract byte getSizeOfOffsets(); // spans 1 byte
 
     /**
      * This value contains the number of bytes used to store the size of an object.
      *
      * <p>This field is present in version 0+ of the superblock.
      */
-    public byte getSizeOfLengths(); // spans 1 byte
+    public abstract byte getSizeOfLengths(); // spans 1 byte
 
     /**
      * Each leaf node of a group B-tree will have at least this many entries but not more than twice
@@ -89,7 +112,7 @@ public interface Superblock {
      *
      * <p>This field is present in version 0 and 1 of the superblock.
      */
-    public short getGroupLeafNodeK(); // span 2 bytes (short)
+    public abstract short getGroupLeafNodeK(); // span 2 bytes (short)
 
     /**
      * Each internal node of a group B-tree will have at least this many entries but not more than
@@ -100,7 +123,7 @@ public interface Superblock {
      * <p>This field is present in version 0 and 1 of the superblock.
      */
     // TODO: add @see description of B-trees
-    public short getGroupInternalNodeK(); // span 2 bytes (short)
+    public abstract short getGroupInternalNodeK(); // span 2 bytes (short)
 
     /**
      * For superblock version 0, 1 and 3: This field is unused and should be ignored.
@@ -128,7 +151,7 @@ public interface Superblock {
      * @implNote the only version that does not ignore this value has a size of 1 byte, so the
      * return type is byte instead of int.
      */
-    public byte getFileConsistencyFlags(); // spans 1 byte for the only used version
+    public abstract byte getFileConsistencyFlags(); // spans 1 byte for the only used version
 
     /**
      * Each internal node of an indexed storage B-tree will have at least this many entries but not
@@ -140,7 +163,7 @@ public interface Superblock {
      * <p>This field is present in version 1 of the superblock.
      */
     // TODO: add @see description of B-trees
-    public short getIndexedStorageInternalNodeK(); // span 2bytes (short)
+    public abstract short getIndexedStorageInternalNodeK(); // span 2bytes (short)
 
     /**
      * This is the absolute file address of the first byte of the HDF5 data within the file. The
@@ -154,9 +177,10 @@ public interface Superblock {
      *
      * <p>This field is present in version 0+ of the superblock.
      *
-     * @implNote returns a Number because the length of the fields depends on the {@link #getSizeOfOffsets()}.
+     * @implNote returns a Number because the length of the fields depends on the {@link
+     * #getSizeOfOffsets()}.
      */
-    public Number getBaseAddress();
+    public abstract Number getBaseAddress();
 
     /**
      * The file’s free space is not persistent for version 0 and 1 of the superblock. Currently this
@@ -164,9 +188,10 @@ public interface Superblock {
      *
      * <p>This field is present in version 0 and 1 of the superblock.
      *
-     * @implNote returns a Number because the length of the fields depends on the {@link #getSizeOfOffsets()}.
+     * @implNote returns a Number because the length of the fields depends on the {@link
+     * #getSizeOfOffsets()}.
      */
-    public Number getAddressOfGlobalFreeSpaceIndex();
+    public abstract Number getAddressOfGlobalFreeSpaceIndex();
 
     /**
      * This is the absolute file address of the first byte past the end of all HDF5 data. It is used
@@ -175,9 +200,10 @@ public interface Superblock {
      *
      * <p>This field is present in version 0+ of the superblock.
      *
-     * @implNote returns a Number because the length of the fields depends on the {@link #getSizeOfOffsets()}.
+     * @implNote returns a Number because the length of the fields depends on the {@link
+     * #getSizeOfOffsets()}.
      */
-    public Number getEndOfFileAddress();
+    public abstract Number getEndOfFileAddress();
 
     /**
      * This is the relative file address of the file driver information block which contains
@@ -186,9 +212,10 @@ public interface Superblock {
      *
      * <p>This field is present in version 0 and 1 of the superblock.
      *
-     * @implNote returns a Number because the length of the fields depends on the {@link #getSizeOfOffsets()}.
+     * @implNote returns a Number because the length of the fields depends on the {@link
+     * #getSizeOfOffsets()}.
      */
-    public Number getDriverInformationBlockAddress();
+    public abstract Number getDriverInformationBlockAddress();
 
 
     /**
@@ -197,7 +224,7 @@ public interface Superblock {
      *
      * <p>This field is present in version 0 and 1 of the superblock.
      */
-    public int getRootGroupSymbolTableEntry();
+    public abstract int getRootGroupSymbolTableEntry();
 
     /**
      * The field is the address of the object header for the superblock extension. If there is no
@@ -205,9 +232,10 @@ public interface Superblock {
      *
      * <p>This field is present in version 2+ of the superblock.
      *
-     * @implNote returns a Number because the length of the fields depends on the {@link #getSizeOfOffsets()}.
+     * @implNote returns a Number because the length of the fields depends on the {@link
+     * #getSizeOfOffsets()}.
      */
-    public Number getSuperblockExtensionAddress(); // spans 4 bytes (int)
+    public abstract Number getSuperblockExtensionAddress(); // spans 4 bytes (int)
 
     /**
      * This is the address of the root group object header, which serves as the entry point into the
@@ -215,16 +243,15 @@ public interface Superblock {
      *
      * <p>This field is present in version 2+ of the superblock.
      *
-     * @implNote returns a Number because the length of the fields depends on the {@link #getSizeOfOffsets()}.
+     * @implNote returns a Number because the length of the fields depends on the {@link
+     * #getSizeOfOffsets()}.
      */
-    public Number getRootGroupObjectHeaderAddress();
+    public abstract Number getRootGroupObjectHeaderAddress();
 
     /**
      * The checksum for the superblock.
      *
      * <p>This field is present in version 2+ of the superblock.
      */
-    public int getSuperblockChecksum(); // spans 4 bytes (int)
-
-
+    public abstract int getSuperblockChecksum(); // spans 4 bytes (int)
 }
