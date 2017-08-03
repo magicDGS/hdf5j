@@ -1,4 +1,6 @@
-package org.magicdgs.hdf5j;
+package org.magicdgs.hdf5j.utils;
+
+import org.magicdgs.hdf5j.HDF5Constants;
 
 import com.google.common.base.Preconditions;
 
