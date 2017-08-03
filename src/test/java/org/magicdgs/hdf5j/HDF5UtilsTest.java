@@ -1,5 +1,7 @@
 package org.magicdgs.hdf5j;
 
+import org.magicdgs.hdf5j.utils.HDF5Utils;
+
 import com.google.common.primitives.Bytes;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
