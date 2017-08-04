@@ -1,7 +1,11 @@
 package org.magicdgs.hdf5j.fileformat.level0.superblock;
 
 import org.magicdgs.hdf5j.HDF5Constants;
+import org.magicdgs.hdf5j.io.FileAddressManager;
 
+import com.google.common.io.LittleEndianDataOutputStream;
+
+import java.io.IOException;
 import java.math.BigInteger;
 
 /**
@@ -45,25 +49,33 @@ import java.math.BigInteger;
 public interface Superblock {
 
     /**
-     * The only value currently valid in <b>Version Number of the File’s Free Space Information</b>
-     * ({@link #getFreeSpaceManagerVersionNumber()}) is ‘0’, which indicates that the file’s free
-     * space is as described in <b>Symbol Table Entry</b>.
+     * The only value currently valid in the <b>Version Number of the File’s Free Space
+     * Information</b> field is ‘0’, which indicates that the file’s free space is as described in
+     * <b>Free-space Manager</b>.
      *
      * @see #getFreeSpaceManagerVersionNumber().
      */
-    // TODO: add link to Symbol Table Entry class once it is implemented
+    // TODO: add link to Free-space Manager class once it is implemented
     public static final int FREE_SPACE_MANAGER_VERSION_NUMBER = 0;
 
     /**
-     * Only valid value for <b>Version Number of the Root Group Symbol Table Entry</b>
-     * ({@link #getRootSymbolTableEntryVersionNumber()} if present.
+     * The only value currently valid in the <b>Version Number of the Root Group Symbol Table
+     * Entry</b> field is ‘0’, which indicates that the root group symbol table entry is formatted
+     * as described in <b>Symbol Table Entry</b>.
+     *
+     * @see #getRootSymbolTableEntryVersionNumber().
      */
+    // TODO: add link to Symbol Table Entry class once it is implemented
     public static final int ROOT_SYMBOL_TABLE_ENTRY_VERSION_NUMBER = 0;
 
     /**
-     * Only valid value for <b>Version Number of Shared Header Message Format</b>
-     * ({@link #getSharedHeaderMessageFormatVersionNumber()}) if present.
+     * The only value currently valid in the <b>Version Number of the Shared Header Message
+     * Format</b> field is ‘0’, which indicates that shared header messages are formatted as
+     * described in <b>Data Object Header Messages</b>.
+     *
+     * @see #getSharedHeaderMessageFormatVersionNumber().
      */
+    // TODO: add link to Data Object Header Messages class once it is implemented
     public static final int SHARED_HEADER_MESSAGE_FORMAT_VERSION_NUMBER = 0;
 
 
@@ -92,29 +104,39 @@ public interface Superblock {
      * <p>The only value currently valid in this field is {@link #FREE_SPACE_MANAGER_VERSION_NUMBER}.
      *
      * <p>This field is present in versions 0 and 1 of the superblock.
-     * @see #FREE_SPACE_MANAGER_VERSION_NUMBER
      *
-     * @return version of the free space manager if present.
-     * @throws
+     * @return if present, unsigned byte representing the version of the free space manager.
+     *
+     * @throws UnsupportedOperationException TODO: change for a SuperblockVersionException
+     * @see #FREE_SPACE_MANAGER_VERSION_NUMBER
      */
-    // TODO: add link to Symbol Table Entry class once it is implemented
+    // TODO: add link to Free-space Manager class once it is implemented
     public int getFreeSpaceManagerVersionNumber();
 
     /**
-     * This value is used to determine the format of the information in the Root Group Symbol Table
-     * Entry. When the format of the information in that field is changed, the version number is
-     * incremented to the next integer and can be used to determine how the information in the field
-     * is formatted.
+     * Gets the <b>Version Number of the Root Group Symbol Table Entry</b>.
      *
-     * <p>The only value currently valid in this field is ‘0’, which indicates that the root group
-     * symbol table entry is formatted as described below.
+     * <p>This value is used to determine the format of the information in the Root Group Symbol
+     * Table Entry. When the format of the information in that field is changed, the version number
+     * is incremented to the next integer and can be used to determine how the information in the
+     * field is formatted.
+     *
+     * <p>The only value currently valid in this field is {@link #ROOT_SYMBOL_TABLE_ENTRY_VERSION_NUMBER}.
      *
      * <p>This field is present in version 0 and 1 of the superblock.
+     *
+     * @return if present, unsigned byte representing the version number for the root symbol table entry.
+     *
+     * @throws UnsupportedOperationException TODO: change for a SuperblockVersionException
+     * @see #ROOT_SYMBOL_TABLE_ENTRY_VERSION_NUMBER
      */
+    // TODO: add link to Symbol Table Entry class once it is implemented
     public int getRootSymbolTableEntryVersionNumber();
 
     /**
-     * This value is used to determine the format of the information in a shared object header
+     * Gets the <b>Version Number of the Shared Header Message Format</b>.
+     *
+     * <p>This value is used to determine the format of the information in a shared object header
      * message. Since the format of the shared header messages differs from the other private header
      * messages, a version number is used to identify changes in the format.
      *
@@ -122,60 +144,96 @@ public interface Superblock {
      * messages are formatted as described below.
      *
      * <p>This field is present in version 0 and 1 of the superblock.
+     *
+     * @return if present, unsigned byte representing the version number of the shared header
+     * message format.
+     *
+     * @throws UnsupportedOperationException TODO: change for a SuperblockVersionException
+     * @see #SHARED_HEADER_MESSAGE_FORMAT_VERSION_NUMBER
      */
+    // TODO: add link to Data Object Header Messages class once it is implemented
     public int getSharedHeaderMessageFormatVersionNumber();
 
     /**
-     * This value contains the number of bytes used to store addresses in the file. The values for
-     * the addresses of objects in the file are offsets relative to a base address, usually the
+     * Gets the <b>Size of Offsets</b>.
+     *
+     * <p>This value contains the number of bytes used to store addresses in the file. The values
+     * for the addresses of objects in the file are offsets relative to a base address, usually the
      * address of the superblock signature. This allows a wrapper to be added after the file is
      * created without invalidating the internal offset locations.
      *
      * <p>This field is present in version 0+ of the superblock.
+     *
+     * @return unsigned byte representing the number of bytes used to store addressed.
      */
     public int getSizeOfOffsets();
 
     /**
-     * This value contains the number of bytes used to store the size of an object.
+     * Gets the <b>Size of Lengths</b>.
+     *
+     * <p>This value contains the number of bytes used to store the size of an object.
      *
      * <p>This field is present in version 0+ of the superblock.
+     *
+     * @return unsigned byte representing the number of bytes used to store the size of an object.
      */
     public int getSizeOfLengths();
 
     /**
-     * Each leaf node of a group B-tree will have at least this many entries but not more than twice
-     * this many. If a group has a single leaf node then it may have fewer entries.
+     * Gets the <b>Group Leaf Node K</b>.
+     *
+     * <p>Each leaf node of a group B-tree will have at least this many entries but not more than
+     * twice this many. If a group has a single leaf node then it may have fewer entries.
      *
      * <p>This value must be greater than zero.
      *
      * <p>This field is present in version 0 and 1 of the superblock.
+     *
+     * @return unsigned byte used for compute the minimum and maximum number of entries in a B-Tree group.
+     *
+     * @throws UnsupportedOperationException TODO: change for a SuperblockVersionException
      */
-    // TODO: add @see description of B-trees
+    // TODO: add a link to B-Tree class once it is implemented
     public int getGroupLeafNodeK();
 
     /**
-     * Each internal node of a group B-tree will have at least this many entries but not more than
-     * twice this many. If the group has only one internal node then it might have fewer entries.
+     * Gets the <b>Group Internal Node K</b>.
+     *
+     * <p>Each internal node of a group B-tree will have at least this many entries but not more
+     * than twice this many. If the group has only one internal node then it might have fewer
+     * entries.
      *
      * <p>This value must be greater than zero.
      *
      * <p>This field is present in version 0 and 1 of the superblock.
+     *
+     * @return unsigned byte used for compute the minimum and maximum number of entries in a B-Tree
+     * internal node.
+     *
+     * @throws UnsupportedOperationException TODO: change for a SuperblockVersionException
      */
-    // TODO: add @see description of B-trees
+    // TODO: add a link to B-Tree class once it is implemented
     public int getGroupInternalNodeK();
 
     /**
-     * For superblock version 0, 1 and 2: This field is unused and should be ignored.
+     * Gets the <b>File Consistency Flags</b>.
+     *
+     * <p>For superblock version 0, 1 and 2: This field is unused and should be ignored.
      *
      * <p>For superblock version 3: This value contains flags to ensure file consistency for file
      * locking. Currently, the following bit flags are defined:
      *
      * <ul>
+     *
      * <li>Bit 0 if set indicates that the file has been opened for write access.</li>
+     *
      * <li>Bit 1 is reserved for future use.</li>
+     *
      * <li>Bit 2 if set indicates that the file has been opened for single-writer/multiple-reader
      * (SWMR) write access.</li>
+     *
      * <li>Bits 3-7 are reserved for future use.</li>
+     *
      * </ul>
      *
      * <p>Bit 0 should be set as the first action when a file has been opened for write access. Bit
@@ -187,25 +245,34 @@ public interface Superblock {
      * <p>The size of this field has been reduced from 4 bytes in superblock format versions 0 and 1
      * to 1 byte.
      *
-     * @implNote the only version that does not ignore this value has a size of 1 byte, so the
-     * return type is byte instead of int.
+     * @return integer for versions 0 and 1; unsigned byte for versions 2 and 3 containing the
+     * consistency flags.
      */
     public int getFileConsistencyFlags();
 
     /**
-     * Each internal node of an indexed storage B-tree will have at least this many entries but not
-     * more than twice this many. If the index storage B-tree has only one internal node then it
+     * Gets the <b>Indexed Storage Internal Node K</b>.
+     *
+     * <p>Each internal node of an indexed storage B-tree will have at least this many entries but n
+     * ot more than twice this many. If the index storage B-tree has only one internal node then it
      * might have fewer entries.
      *
      * <p>This value must be greater than zero.
      *
      * <p>This field is present in version 1 of the superblock.
+     *
+     * @return unsigned byte used for compute the minimum and maximum number of entries in a B-Tree
+     * indexed internal node.
+     *
+     * @throws UnsupportedOperationException TODO: change for a SuperblockVersionException
      */
-    // TODO: add @see description of B-trees
+    // TODO: add a link to B-Tree class once it is implemented
     public int getIndexedStorageInternalNodeK();
 
     /**
-     * This is the absolute file address of the first byte of the HDF5 data within the file. The
+     * Gets the <b>Base Address</b>.
+     *
+     * <p>This is the absolute file address of the first byte of the HDF5 data within the file. The
      * library currently constrains this value to be the absolute file address of the superblock
      * itself when creating new files; future versions of the library may provide greater
      * flexibility. When opening an existing file and this address does not match the offset of the
@@ -216,80 +283,123 @@ public interface Superblock {
      *
      * <p>This field is present in version 0+ of the superblock.
      *
-     * @implNote returns a {@link BigInteger} constructed with a {@code byte[]} with size
-     * {@link #getSizeOfOffsets()}.
+     * @return address of the first byte of the HDF5 data.
+     *
+     * @implNote the return type is a {@link BigInteger} to encapsulate the {@code byte[]} with
      */
-    public BigInteger getBaseAddress();
+    public FileAddressManager.FileAddress getBaseAddress();
 
     /**
-     * The file’s free space is not persistent for version 0 and 1 of the superblock. Currently this
-     * field always contains the undefined address.
+     * Gets the <b>Address of Global Free-space Index</b>.
+     *
+     * <p>The file’s free space is not persistent for version 0 and 1 of the superblock. Currently
+     * this field always contains the undefined address.
      *
      * <p>This field is present in version 0 and 1 of the superblock.
      *
-     * @implNote returns a {@link BigInteger} constructed with a {@code byte[]} with size
-     * {@link #getSizeOfOffsets()}.
+     * @return undefined address (file address with all bits set).
+     *
+     * @throws UnsupportedOperationException TODO: change for a SuperblockVersionException
      */
-    public BigInteger getAddressOfGlobalFreeSpaceIndex();
+    public FileAddressManager.FileAddress getAddressOfGlobalFreeSpaceIndex();
 
     /**
-     * This is the absolute file address of the first byte past the end of all HDF5 data. It is used
-     * to determine whether a file has been accidently truncated and as an address where file data
-     * allocation can occur if space from the free list is not used.
+     * Gets the <b>End of File Address</b>.
+     *
+     * <p>This is the absolute file address of the first byte past the end of all HDF5 data. It is
+     * used to determine whether a file has been accidently truncated and as an address where file
+     * data allocation can occur if space from the free list is not used.
      *
      * <p>This field is present in version 0+ of the superblock.
      *
-     * @implNote returns a {@link BigInteger} constructed with a {@code byte[]} with size
-     * {@link #getSizeOfOffsets()}.
+     * @return address of the first byte past the end of the HDF5 data.
      */
-    public BigInteger getEndOfFileAddress();
+    public FileAddressManager.FileAddress getEndOfFileAddress();
 
     /**
-     * This is the relative file address of the file driver information block which contains
+     * Gets the <b>Driver Information Block Address</b>.
+     *
+     * <p>This is the relative file address of the file driver information block which contains
      * driver-specific information needed to reopen the file. If there is no driver information
      * block then this entry should be the undefined address.
      *
      * <p>This field is present in version 0 and 1 of the superblock.
      *
-     * @implNote returns a {@link BigInteger} constructed with a {@code byte[]} with size
-     * {@link #getSizeOfOffsets()}.
+     * @return address of the file driver information block; undefined address if there is no driver.
+     *
+     * @throws UnsupportedOperationException TODO: change for a SuperblockVersionException
      */
-    public BigInteger getDriverInformationBlockAddress();
+    // TODO: add link to File Driver Info class once it is implemented
+    public FileAddressManager.FileAddress getDriverInformationBlockAddress();
 
 
     /**
-     * This is the symbol table entry of the root group, which serves as the entry point into the
+     * Gets the <b>Root Group Symbol Table Entry</b>.
+     *
+     * <p>This is the symbol table entry of the root group, which serves as the entry point into the
      * group graph for the file.
      *
      * <p>This field is present in version 0 and 1 of the superblock.
+     *
+     * @return the Root Group Symbol Table Entry.
+     *
+     * @throws UnsupportedOperationException TODO: change for a SuperblockVersionException
      */
-    public int getRootGroupSymbolTableEntry();
+    // TODO: add link to the Symbol Table Entry class once it is implemented
+    // TODO: this should return the Symbol Table Entry
+    public Object getRootGroupSymbolTableEntry();
 
     /**
+     * Gets the <b>Superblock Extension Address</b>.
+     *
      * The field is the address of the object header for the superblock extension. If there is no
      * extension then this entry should be the undefined address.
      *
      * <p>This field is present in version 2+ of the superblock.
      *
-     * @implNote returns a {@link BigInteger} constructed with a {@code byte[]} with size
-     * {@link #getSizeOfOffsets()}.
+     * @throws UnsupportedOperationException TODO: change for a SuperblockVersionException
      */
-    public BigInteger getSuperblockExtensionAddress();
+    // TODO: add link to the Superblock Extension Address class once it is implemented
+    public FileAddressManager.FileAddress getSuperblockExtensionAddress();
 
     /**
+     * Gets the <b>Root Group Object Header Address</b>-
+     *
      * This is the address of the root group object header, which serves as the entry point into the
      * group graph for the file.
      *
      * <p>This field is present in version 2+ of the superblock.
      *
-     * @implNote returns a long independently of the {@link #getSizeOfOffsets()}.
+     * @return address of the root group object header.
+     *
+     * @throws UnsupportedOperationException TODO: change for a SuperblockVersionException
      */
-    public BigInteger getRootGroupObjectHeaderAddress();
+    // TODO: add link to the Root Group Object Header class
+    public FileAddressManager.FileAddress getRootGroupObjectHeaderAddress();
 
     /**
-     * The checksum for the superblock.
+     * Gets the <b>Superblock Checksum</b>.
+     *
+     * <p>The checksum for the superblock.
      *
      * <p>This field is present in version 2+ of the superblock.
+     *
+     * @return integer representing the checksum.
+     *
+     * @throws UnsupportedOperationException TODO: change for a SuperblockVersionException
      */
+    // TODO: document that it should be computed using the Jenkins’ lookup3 algorithm
     public int getSuperblockChecksum();
+
+
+    /**
+     * Writes the superblock to the output stream (little-endian).
+     *
+     * @param littleEndianDataOutputStream output stream.
+     *
+     * @throws IOException if an IO error occurs.
+     */
+    public void write(final LittleEndianDataOutputStream littleEndianDataOutputStream)
+            throws IOException;
+
 }
