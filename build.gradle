@@ -47,6 +47,17 @@ task wrapper(type: Wrapper) {
     gradleVersion = '4.0.2'
 }
 
+javadoc {
+    title = "HDF5j $version API"
+
+    // add the links to the Java8 API too
+    options.links("http://docs.oracle.com/javase/8/docs/api/")
+    // add Java8 optional tags
+    options.tags = ["apiNote:a:API Note:",
+                    "implSpec:a:Implementation Requirements:",
+                    "implNote:a:Implementation Note:"]
+}
+
 // test task
 tasks.withType(Test) {
 
@@ -64,7 +75,7 @@ tasks.withType(Test) {
 
     // log the test that is running
     beforeTest { descriptor ->
-        logger.lifecycle("Running Test: " +  descriptor)
+        logger.lifecycle("Running Test: " + descriptor)
     }
 
     // logging after the tests
