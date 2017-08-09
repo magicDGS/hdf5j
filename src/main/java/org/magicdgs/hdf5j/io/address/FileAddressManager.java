@@ -66,16 +66,26 @@ public final class FileAddressManager {
      * @param byteChannel channel to seek.
      * @param address     file address to set the pointer to.
      *
+     * @return normalized file address representing the current position of the byte channel.
+     *
      * @throws HDF5jException.FileAddressException if the address cannot be handled or it is
      *                                             undefined.
      * @throws IOException                         if an IO error occurs.
+     * @see #normalizeAddress(FileAddress)
      */
-    public void seek(final SeekableByteChannel byteChannel, final FileAddress address)
+    public FileAddress seek(final SeekableByteChannel byteChannel, final FileAddress address)
             throws IOException {
-        if (undefinedAddress.equals(address)) {
+        Preconditions.checkArgument(byteChannel != null, "null byteChannel");
+
+        final FileAddress normalized = normalizeAddress(address);
+
+        if (undefinedAddress.equals(normalized)) {
             throw new HDF5jException.FileAddressException(address, " cannot be used to seek");
         }
-        byteChannel.position(validateAddress(address).position);
+
+        byteChannel.position(normalized.position);
+
+        return normalized;
     }
 
     /**
@@ -84,35 +94,23 @@ public final class FileAddressManager {
      * @param address address to encode.
      * @param buffer  buffer to put the address bytes.
      *
-     * @return the same buffer passed to the method.
+     * @return normalized address.
      *
      * @throws HDF5jException.FileAddressException if there is a problem encoding the address.
+     * @see #normalizeAddress(FileAddress)
      */
-    public ByteBuffer encodeAddress(final FileAddress address, final ByteBuffer buffer) {
-        // validate the address to be used
-        final FileAddress validated = validateAddress(address);
-
+    public FileAddress encodeAddress(final FileAddress address, final ByteBuffer buffer) {
         Preconditions.checkArgument(buffer != null, "null buffer");
         // for encoding, we require to be able to write at least addressSize bytes
         Preconditions.checkArgument(buffer.remaining() >= addressSize,
-                "required at least %s bytes in the buffer to write an address", addressSize);
+                "required at least %s bytes in the buffer to write an address (only %s)",
+                addressSize, buffer.remaining());
 
-        if (validated.equals(undefinedAddress)) {
-            // if it is undefined, it is independent of the size of the arrays
-            buffer.put(undefinedAddress.bytes);
-        } else if (validated.bytes.length == addressSize) {
-            buffer.put(validated.bytes);
-        } else if (validated.bytes.length < addressSize) {
-            // pad the byte array with zeroes at the beginning to get the same position encoded with more bytes
-            IntStream.range(validated.bytes.length, addressSize).forEach(i -> buffer.put((byte) 0));
-            // put the address bytes into the buffer
-            buffer.put(validated.bytes);
-        } else {
-            // this should not happen
-            throw new HDF5jException("BUG: should not reach");
-        }
-
-        return buffer;
+        // normalize the address and put the bytes in the buffer
+        final FileAddress normalized = normalizeAddress(address);
+        buffer.put(normalized.bytes);
+        // return the normalized address
+        return normalized;
     }
 
     /**
@@ -122,7 +120,7 @@ public final class FileAddressManager {
      *
      * @param buffer buffer to get the bytes for decode the address.
      *
-     * @return new file address parsed from the buffer.
+     * @return new file address parsed from the buffer; {@link #getUndefinedAddress()} if undefined.
      *
      * @throws HDF5jException.FileAddressException if there is a problem parsing the address.
      */
@@ -132,21 +130,53 @@ public final class FileAddressManager {
                 "at least %s should be available in the provided byte buffer", addressSize);
         final byte[] bytes = new byte[addressSize];
         buffer.get(bytes);
-        return new FileAddress(bytes);
+        final FileAddress address = new FileAddress(bytes);
+        // return always the cached undefinedAddress to avoid storage of the same object
+        return (undefinedAddress.equals(address)) ? undefinedAddress : address;
     }
 
     /**
-     * Checks if the address provided is correctly sized with respect to the factory.
+     * Decodes the address from the provided position.
      *
-     * @param address the address to check.
+     * @param filePosition position in the file to convert to an address; {@code -1} for undefined.
      *
-     * @return the same file address if it fits into the number of bytes for the manager; modified
-     * file address adjusted to the size of this manager.
+     * @return new file address for the position.
      *
-     * @throws HDF5jException.FileAddressException if the address cannot be handled with the
+     * @throws HDF5jException.FileAddressException if there is a problem converting the address.
+     */
+    public FileAddress decodeAddress(final long filePosition) {
+        Preconditions.checkArgument(filePosition >= -1,
+                "file position cannot be negative (%s) except for undefined address (%s)",
+                filePosition, undefinedAddress.position);
+        final byte[] convertedArray = BigInteger.valueOf(filePosition).toByteArray();
+        if (filePosition == -1) {
+            return undefinedAddress;
+        } else if (convertedArray.length == addressSize) {
+            return new FileAddress(convertedArray);
+        } else if (convertedArray.length < addressSize) {
+            final ByteBuffer buffer = ByteBuffer.allocate(addressSize);
+            // pad the byte array with zeroes at the beginning to get the same position encoded with more bytes
+            IntStream.range(convertedArray.length, addressSize).forEach(i -> buffer.put((byte) 0));
+            // put the address bytes into the buffer
+            buffer.put(convertedArray);
+            return new FileAddress(buffer.array());
+        } else {
+            throw new HDF5jException.FileAddressException(
+                    "Position " + filePosition + " cannot be be encoded with " + this);
+        }
+    }
+
+    /**
+     * Normalizes the address by encoding with the manager address size ({@link #getAddressSize()}).
+     *
+     * @param address the address to normalize.
+     *
+     * @return normalized file address (may be the same object).
+     *
+     * @throws HDF5jException.FileAddressException if the address cannot be normalized with this
      *                                             manager.
      */
-    public FileAddress validateAddress(final FileAddress address) {
+    public FileAddress normalizeAddress(final FileAddress address) {
         Preconditions.checkArgument(address != null, "null address");
 
         // for undefined address, it should return the same
@@ -154,20 +184,17 @@ public final class FileAddressManager {
             return undefinedAddress;
         }
 
-        if (address.bytes.length <= getAddressSize()) {
+        if (address.bytes.length == getAddressSize()) {
             return address;
         }
 
-        // get the minimum amount of bytes using the BigInteger, to check if we are able to pad
-        // with zeroes
-        final byte[] convertedArray = BigInteger.valueOf(address.position).toByteArray();
-        if (convertedArray.length <= addressSize) {
-            return new FileAddress(convertedArray);
+        try {
+            return decodeAddress(address.position);
+        } catch (HDF5jException.FileAddressException e) {
+            // rethrow to include in the message the address format
+            throw new HDF5jException.FileAddressException(address, e.getMessage());
         }
-
-        throw new HDF5jException.FileAddressException(address, "cannot be handled with " + this);
     }
-
 
     @Override
     public String toString() {

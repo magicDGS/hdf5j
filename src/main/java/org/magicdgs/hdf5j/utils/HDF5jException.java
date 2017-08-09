@@ -22,7 +22,6 @@ public class HDF5jException extends RuntimeException {
             super(msg);
         }
 
-
         public FileAddressException(final FileAddress address, final String msg) {
             this(String.format("%s %s", address, msg));
         }

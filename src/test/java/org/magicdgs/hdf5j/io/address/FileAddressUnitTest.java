@@ -30,8 +30,8 @@ public class FileAddressUnitTest {
         Assert.assertEquals(longAddress, longAddress);
         Assert.assertEquals(intAddress, intAddress);
         // check the string method too
-        Assert.assertEquals(longAddress.toString(), "FileAddress[8]:0xa");
-        Assert.assertEquals(intAddress.toString(), "FileAddress[4]:0xa");
+        Assert.assertEquals(longAddress.hexDisplay(), "FileAddress[8]:0xa");
+        Assert.assertEquals(intAddress.hexDisplay(), "FileAddress[4]:0xa");
     }
 
     @Test
@@ -53,7 +53,7 @@ public class FileAddressUnitTest {
         final FileAddress undefined =
                 new FileAddress(ByteBuffer.allocate(Integer.BYTES).putInt(-1).array());
         Assert.assertEquals(undefined.position, -1);
-        Assert.assertEquals(undefined.toString(), "UndefinedFileAddress[4]:0xffffffffffffffff");
+        Assert.assertEquals(undefined.hexDisplay(), "UndefinedAddress[4]:0xffffffffffffffff");
     }
 
 

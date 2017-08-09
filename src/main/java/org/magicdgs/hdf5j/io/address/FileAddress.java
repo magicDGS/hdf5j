@@ -47,8 +47,9 @@ public final class FileAddress {
                     return bigInteger.longValueExact();
                 } catch (final ArithmeticException e) {
                     throw new HDF5jException.FileAddressException(String
-                            .format("FileAddress%s:0x%s : Position %s cannot be converted to long",
-                                    bytes.length, bigInteger.toString(16), bigInteger));
+                            .format("%s : Position %s cannot be converted to long",
+                                    baseHexDisplay(bytes.length, bigInteger.toString(16)),
+                                    bigInteger));
                 }
             }
         }
@@ -76,8 +77,7 @@ public final class FileAddress {
 
     @Override
     public int hashCode() {
-        // both bytes and BigInteger should represent the same
-        // use BigInteger because it is more efficient
+        // using the position as in equals
         return Long.hashCode(position);
     }
 
@@ -85,10 +85,17 @@ public final class FileAddress {
      * Returns the hexadecimal representation of the address, indicating the number of bytes used to
      * encode them.
      */
+    public String hexDisplay() {
+        return (position == -1 ? "Undefined" : "File") + baseHexDisplay(bytes.length, Long.toHexString(position));
+    }
+
+    // helper method to display both hexadecimal addresses and errors while using BigInteger
+    private static final String baseHexDisplay(final int numberOfBytes, final String hexString) {
+        return String.format("Address[%s]:0x%s", numberOfBytes, hexString);
+    }
+
     @Override
     public String toString() {
-        final String address = String.format("FileAddress[%s]:0x%s",
-                bytes.length, Long.toHexString(position));
-        return (position == -1) ? "Undefined" + address : address;
+        return hexDisplay();
     }
 }
