@@ -92,3 +92,18 @@ tasks.withType(Test) {
         }
     }
 }
+
+// for jar tasks
+tasks.withType(Jar) {
+    // add license and notice
+    from(rootProject.projectDir) {
+        include "LICENSE.txt"
+        include "NOTICE.txt"
+        into "META-INF"
+    }
+    // add manifest information
+    manifest {
+        attributes 'Implementation-Title': rootProject.name,
+                   'Implementation-Version': version
+    }
+}
