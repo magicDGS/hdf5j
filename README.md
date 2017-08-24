@@ -19,9 +19,9 @@ Code licensed under the BSD License. See the
 
 Tests and implementation are based in the 
 [HDF5 file format](https://support.hdfgroup.org/HDF5/), whose components
-are under [BSD-style Open Source](https://support.hdfgroup.org/products/licenses.html). 
+are under a [BSD-style Open Source](https://support.hdfgroup.org/products/licenses.html). 
 Folders containing files derived from the [HDF group](https://www.hdfgroup.org/)
 are accompanied by the corresponging COPYING file.
 
-For more information third-party licenses and notices, see 
-[NOTICE.txt](https://github.com/magicDGS/hdf5jblob/master/LICENSE.TXT).
+For more information about third-party licenses and notices, see 
+[NOTICE.txt](https://github.com/magicDGS/hdf5jblob/master/NOTICE.TXT).
