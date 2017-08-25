@@ -2,11 +2,6 @@ package org.magicdgs.hdf5j.utils.hashing;
 
 import com.google.common.base.Preconditions;
 
-import java.io.IOException;
-import java.nio.channels.SeekableByteChannel;
-import java.nio.file.Files;
-import java.nio.file.Path;
-
 /**
  * Implementation of <a href="http://www.burtleburtle.net/bob/hash/doobs.html">
  * Bob Jenkins' algorithm for 32-bits hashing</a>. Concretely, it implements the
@@ -36,25 +31,27 @@ public class Lookup3HashFunction {
      * for cryptographic purposes.
      *
      * @param input     unaligned variable-length array of bytes.
-     * @param off       start hashing from this index.
-     * @param len       number of bytes to include.
+     * @param offset    start hashing from this index.
+     * @param length    number of bytes to include.
      * @param initValue value for initialize the hash.
      *
      * @return a 32-bit hash.
      */
-    public final static int hashBytes(byte[] input, int off, int len, final int initValue) {
-        Preconditions.checkPositionIndexes(off, len, input.length);
+    public final static int hashBytes(final byte[] input, final int offset, final int length,
+            final int initValue) {
+        Preconditions.checkPositionIndexes(offset, length, input.length);
 
         // compute the lenght that it is going to be used in the hash
-        int length = len - off;
+        int len = length - offset;
 
         // setting up the internal state
-        int a = INTERNAL_STATE_CONSTANT + length + initValue;
+        int a = INTERNAL_STATE_CONSTANT + len + initValue;
         int b = a;
         int c = a;
 
+        int off = offset;
         // all but the last block
-        while (length > LAST_BLOCK_LENGTH) {
+        while (len > LAST_BLOCK_LENGTH) {
             a += Byte.toUnsignedInt(input[off]);
             a += Byte.toUnsignedInt(input[off + 1]) << 8;
             a += Byte.toUnsignedInt(input[off + 2]) << 16;
@@ -89,11 +86,11 @@ public class Lookup3HashFunction {
             b += a;
             // mixing finished
 
-            length -= LAST_BLOCK_LENGTH;
+            len -= LAST_BLOCK_LENGTH;
             off += LAST_BLOCK_LENGTH;
         }
 
-        switch (length) {
+        switch (len) {
             case 12:
                 c += Byte.toUnsignedInt(input[off + 11]) << 24;
             case 11:
@@ -146,7 +143,7 @@ public class Lookup3HashFunction {
     }
 
     // rotate function
-    private static int rot(int x, int k) {
+    private static int rot(final int x, final int k) {
         return (x << k) | (x >>> (32 - k));
     }
 }
