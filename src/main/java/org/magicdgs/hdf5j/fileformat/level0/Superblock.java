@@ -343,6 +343,8 @@ public interface Superblock {
      *
      * <p>This field is present in version 2+ of the superblock.
      *
+     * @return address of the superblock extension.
+     *
      * @throws org.magicdgs.hdf5j.utils.HDF5jException.SuperblockVersionException if the version
      *                                                                            does not support
      *                                                                            this field.
