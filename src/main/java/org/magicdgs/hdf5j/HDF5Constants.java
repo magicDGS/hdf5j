@@ -16,6 +16,14 @@ public final class HDF5Constants {
     public static final int[] FORMAT_SIGNATURE = "\211HDF\r\n\032\n".chars().toArray();
 
     /**
+     * Unsigned byte signature for the Free-space Manager Header.
+     *
+     * <p>Note: because in Java bytes are always signed, this signature is represented as an array
+     * of unsigned integers.
+     */
+    public static final int[] FREE_SPACE_MANAGER_SIGNARUTE = "FSHD".chars().toArray();
+
+    /**
      * The only value currently valid in the <b>Version Number of the File’s Free Space
      * Information</b> field is ‘0’, which indicates that the file’s free space is as described in
      * <b>Free-space Manager</b>.
