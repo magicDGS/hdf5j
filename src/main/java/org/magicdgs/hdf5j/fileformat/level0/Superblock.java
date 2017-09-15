@@ -4,7 +4,7 @@ import org.magicdgs.hdf5j.fileformat.HDF5FileBlock;
 import org.magicdgs.hdf5j.fileformat.address.FileAddress;
 
 /**
- * Superblock interface for Superbloc. Note that the Format Signature is not included in
+ * Superblock interface (Level 0A). Note that the Format Signature is not included in
  * this layout, because it is represented by the constant
  * {@link org.magicdgs.hdf5j.HDF5Constants#HDF5_FORMAT_SIGNATURE}.
  *
