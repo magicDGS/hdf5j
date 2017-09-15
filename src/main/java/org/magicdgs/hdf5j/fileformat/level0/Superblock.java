@@ -1,5 +1,6 @@
 package org.magicdgs.hdf5j.fileformat.level0;
 
+import org.magicdgs.hdf5j.fileformat.HDF5FileBlock;
 import org.magicdgs.hdf5j.io.address.FileAddress;
 
 /**
@@ -41,7 +42,7 @@ import org.magicdgs.hdf5j.io.address.FileAddress;
  * @implNote all byte/short fields returns an {@link int} because they are represented as unsigned
  * bytes.
  */
-public interface Superblock {
+public interface Superblock extends HDF5FileBlock {
 
     /**
      * Gets the <b>Version Number of the Superblock</b>.
@@ -57,6 +58,7 @@ public interface Superblock {
      *
      * @return unsigned byte representing the version number of the superblock.
      */
+    @Override
     public int getVersionNumber();
 
     /**
