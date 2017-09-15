@@ -48,7 +48,8 @@ task wrapper(type: Wrapper) {
     gradleVersion = '4.0.2'
 }
 
-javadoc {
+tasks.withType(Javadoc) {
+    // the title includes the version of the API
     title = "HDF5j $version API"
 
     // add the links to the Java8 API too
@@ -57,6 +58,25 @@ javadoc {
     options.tags = ["apiNote:a:API Note:",
                     "implSpec:a:Implementation Requirements:",
                     "implNote:a:Implementation Note:"]
+
+    // capture the output for the javadoc task to check if there are warnings
+    // from https://stackoverflow.com/questions/29519085/how-to-fail-gradle-build-on-javadoc-warnings
+    def capturedOutput = []
+    def listener = { capturedOutput << it } as StandardOutputListener
+    doFirst {
+        logging.addStandardErrorListener(listener)
+        logging.addStandardOutputListener(listener)
+    }
+    doLast {
+        logging.removeStandardOutputListener(listener)
+        logging.removeStandardErrorListener(listener)
+        // if threre is any warning, fail with a gradle exception
+        capturedOutput.each { e ->
+            if(e.toString() =~ " warning: ") {
+                throw new GradleException("There are javadoc warnings: javadoc failed");
+            }
+        }
+    }
 }
 
 // test task
