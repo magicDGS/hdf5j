@@ -84,6 +84,8 @@ public final class FileAddress {
     /**
      * Returns the hexadecimal representation of the address, indicating the number of bytes used to
      * encode them.
+     *
+     * @return address hexadecimal representation.
      */
     public String hexDisplay() {
         return (position == -1 ? "Undefined" : "File") + baseHexDisplay(bytes.length, Long.toHexString(position));
