@@ -75,7 +75,7 @@ public class HDF5UtilsTest extends HDF5jTest {
     public void testIsHDF5Stream() throws Exception {
         // HDF5 stream
         final InputStream hdf5SignatureStream = new ByteArrayInputStream(
-                Bytes.toArray(Ints.asList(HDF5Constants.FORMAT_SIGNATURE)));
+                Bytes.toArray(Ints.asList(HDF5Constants.HDF5_FORMAT_SIGNATURE)));
         // check that a stream with the HDF5 signature returns true
         Assert.assertTrue(HDF5Utils.isHDF5Stream(hdf5SignatureStream));
         // and because it is not consumed, it could be passed again

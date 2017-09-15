@@ -11,9 +11,9 @@ public class HDF5ConstantsTest extends HDF5jTest {
     @Test
     public void testFormatSignature() {
         // check that the signature has 8 bytes
-        Assert.assertEquals(HDF5Constants.FORMAT_SIGNATURE.length, 8);
+        Assert.assertEquals(HDF5Constants.HDF5_FORMAT_SIGNATURE.length, 8);
         // assert that the signature contains the expected decimal representation
-        Assert.assertEquals(HDF5Constants.FORMAT_SIGNATURE, new int[]{137, 72, 68, 70, 13, 10, 26, 10});
+        Assert.assertEquals(HDF5Constants.HDF5_FORMAT_SIGNATURE, new int[]{137, 72, 68, 70, 13, 10, 26, 10});
     }
 
 }

@@ -6,7 +6,7 @@ import org.magicdgs.hdf5j.fileformat.address.FileAddress;
 /**
  * Superblock interface for Superbloc. Note that the Format Signature is not included in
  * this layout, because it is represented by the constant
- * {@link org.magicdgs.hdf5j.HDF5Constants#FORMAT_SIGNATURE}.
+ * {@link org.magicdgs.hdf5j.HDF5Constants#HDF5_FORMAT_SIGNATURE}.
  *
  * <p>The superblock may begin at certain predefined offsets within the HDF5 file, allowing a block
  * of unspecified content for users to place additional information at the beginning (and end) of
