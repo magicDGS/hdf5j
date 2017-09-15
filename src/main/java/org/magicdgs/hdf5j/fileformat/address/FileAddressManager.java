@@ -1,4 +1,4 @@
-package org.magicdgs.hdf5j.io.address;
+package org.magicdgs.hdf5j.fileformat.address;
 
 import org.magicdgs.hdf5j.utils.HDF5jException;
 

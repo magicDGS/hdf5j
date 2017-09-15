@@ -1,7 +1,7 @@
 package org.magicdgs.hdf5j.utils;
 
 import org.magicdgs.hdf5j.fileformat.level0.Superblock;
-import org.magicdgs.hdf5j.io.address.FileAddress;
+import org.magicdgs.hdf5j.fileformat.address.FileAddress;
 
 /**
  * Marker interface for exceptions caused by the HDF5j library.
