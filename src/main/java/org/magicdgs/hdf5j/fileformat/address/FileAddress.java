@@ -1,6 +1,6 @@
 package org.magicdgs.hdf5j.fileformat.address;
 
-import org.magicdgs.hdf5j.utils.HDF5jException;
+import org.magicdgs.hdf5j.utils.exceptions.FileAddressException;
 
 import com.google.common.base.Preconditions;
 
@@ -27,7 +27,7 @@ public final class FileAddress {
      *
      * @param bytes big-endian bytes representing a position in the file.
      *
-     * @throws HDF5jException.FileAddressException if there is a problem getting on the address
+     * @throws FileAddressException if there is a problem getting on the address
      *                                             parsing.
      */
     FileAddress(final byte[] bytes) {
@@ -46,7 +46,7 @@ public final class FileAddress {
                 try {
                     return bigInteger.longValueExact();
                 } catch (final ArithmeticException e) {
-                    throw new HDF5jException.FileAddressException(String
+                    throw new FileAddressException(String
                             .format("%s : Position %s cannot be converted to long",
                                     baseHexDisplay(bytes.length, bigInteger.toString(16)),
                                     bigInteger));

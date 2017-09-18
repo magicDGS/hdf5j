@@ -2,6 +2,7 @@ package org.magicdgs.hdf5j.fileformat.level0;
 
 import org.magicdgs.hdf5j.fileformat.HDF5FileBlock;
 import org.magicdgs.hdf5j.fileformat.address.FileAddress;
+import org.magicdgs.hdf5j.utils.exceptions.SuperblockVersionException;
 
 /**
  * Superblock interface (Level 0A). Note that the Format Signature is not included in
@@ -73,7 +74,7 @@ public interface Superblock extends HDF5FileBlock {
      *
      * @return if present, unsigned byte representing the version of the free space manager.
      *
-     * @throws org.magicdgs.hdf5j.utils.HDF5jException.SuperblockVersionException if the version
+     * @throws SuperblockVersionException if the version
      *                                                                            does not support
      *                                                                            this field.
      * @see org.magicdgs.hdf5j.HDF5Constants#FREE_SPACE_MANAGER_VERSION_NUMBER
@@ -97,7 +98,7 @@ public interface Superblock extends HDF5FileBlock {
      * @return if present, unsigned byte representing the version number for the root symbol table
      * entry.
      *
-     * @throws org.magicdgs.hdf5j.utils.HDF5jException.SuperblockVersionException if the version
+     * @throws SuperblockVersionException if the version
      *                                                                            does not support
      *                                                                            this field.
      * @see org.magicdgs.hdf5j.HDF5Constants#ROOT_SYMBOL_TABLE_ENTRY_VERSION_NUMBER
@@ -122,7 +123,7 @@ public interface Superblock extends HDF5FileBlock {
      * @return if present, unsigned byte representing the version number of the shared header
      * message format.
      *
-     * @throws org.magicdgs.hdf5j.utils.HDF5jException.SuperblockVersionException if the version
+     * @throws SuperblockVersionException if the version
      *                                                                            does not support
      *                                                                            this field.
      * @see org.magicdgs.hdf5j.HDF5Constants#SHARED_HEADER_MESSAGE_FORMAT_VERSION_NUMBER
@@ -168,7 +169,7 @@ public interface Superblock extends HDF5FileBlock {
      * @return unsigned byte used for compute the minimum and maximum number of entries in a B-Tree
      * group.
      *
-     * @throws org.magicdgs.hdf5j.utils.HDF5jException.SuperblockVersionException if the version
+     * @throws SuperblockVersionException if the version
      *                                                                            does not support
      *                                                                            this field.
      */
@@ -189,7 +190,7 @@ public interface Superblock extends HDF5FileBlock {
      * @return unsigned byte used for compute the minimum and maximum number of entries in a B-Tree
      * internal node.
      *
-     * @throws org.magicdgs.hdf5j.utils.HDF5jException.SuperblockVersionException if the version
+     * @throws SuperblockVersionException if the version
      *                                                                            does not support
      *                                                                            this field.
      */
@@ -245,7 +246,7 @@ public interface Superblock extends HDF5FileBlock {
      * @return unsigned byte used for compute the minimum and maximum number of entries in a B-Tree
      * indexed internal node.
      *
-     * @throws org.magicdgs.hdf5j.utils.HDF5jException.SuperblockVersionException if the version
+     * @throws SuperblockVersionException if the version
      *                                                                            does not support
      *                                                                            this field.
      */
@@ -280,7 +281,7 @@ public interface Superblock extends HDF5FileBlock {
      *
      * @return undefined address (file address with all bits set).
      *
-     * @throws org.magicdgs.hdf5j.utils.HDF5jException.SuperblockVersionException if the version
+     * @throws SuperblockVersionException if the version
      *                                                                            does not support
      *                                                                            this field.
      * @see org.magicdgs.hdf5j.fileformat.address.FileAddressManager#getUndefinedAddress()
@@ -311,7 +312,7 @@ public interface Superblock extends HDF5FileBlock {
      *
      * @return address of the file driver information block; undefined address if there is no driver.
      *
-     * @throws org.magicdgs.hdf5j.utils.HDF5jException.SuperblockVersionException if the version
+     * @throws SuperblockVersionException if the version
      *                                                                            does not support
      *                                                                            this field.
      */
@@ -329,7 +330,7 @@ public interface Superblock extends HDF5FileBlock {
      *
      * @return the Root Group Symbol Table Entry.
      *
-     * @throws org.magicdgs.hdf5j.utils.HDF5jException.SuperblockVersionException if the version
+     * @throws SuperblockVersionException if the version
      *                                                                            does not support
      *                                                                            this field.
      */
@@ -347,7 +348,7 @@ public interface Superblock extends HDF5FileBlock {
      *
      * @return address of the superblock extension.
      *
-     * @throws org.magicdgs.hdf5j.utils.HDF5jException.SuperblockVersionException if the version
+     * @throws SuperblockVersionException if the version
      *                                                                            does not support
      *                                                                            this field.
      */
@@ -364,7 +365,7 @@ public interface Superblock extends HDF5FileBlock {
      *
      * @return address of the root group object header.
      *
-     * @throws org.magicdgs.hdf5j.utils.HDF5jException.SuperblockVersionException if the version
+     * @throws SuperblockVersionException if the version
      *                                                                            does not support
      *                                                                            this field.
      */
@@ -381,7 +382,7 @@ public interface Superblock extends HDF5FileBlock {
      *
      * @return integer representing the checksum.
      *
-     * @throws org.magicdgs.hdf5j.utils.HDF5jException.SuperblockVersionException if the version
+     * @throws SuperblockVersionException if the version
      *                                                                            does not support
      *                                                                            this field.
      */
