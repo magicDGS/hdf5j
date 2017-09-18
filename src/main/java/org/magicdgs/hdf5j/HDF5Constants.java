@@ -13,7 +13,7 @@ public final class HDF5Constants {
      * <p>Note: because in Java bytes are always signed, this signature is represented as an array
      * of unsigned integers.
      */
-    public static final int[] FORMAT_SIGNATURE = "\211HDF\r\n\032\n".chars().toArray();
+    public static final int[] HDF5_FORMAT_SIGNATURE = "\211HDF\r\n\032\n".chars().toArray();
 
     /**
      * The only value currently valid in the <b>Version Number of the File’s Free Space
