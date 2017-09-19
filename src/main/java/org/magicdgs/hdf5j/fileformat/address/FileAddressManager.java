@@ -1,6 +1,6 @@
 package org.magicdgs.hdf5j.fileformat.address;
 
-import org.magicdgs.hdf5j.utils.HDF5jException;
+import org.magicdgs.hdf5j.utils.exceptions.FileAddressException;
 
 import com.google.common.base.Preconditions;
 
@@ -68,7 +68,7 @@ public final class FileAddressManager {
      *
      * @return normalized file address representing the current position of the byte channel.
      *
-     * @throws HDF5jException.FileAddressException if the address cannot be handled or it is
+     * @throws FileAddressException if the address cannot be handled or it is
      *                                             undefined.
      * @throws IOException                         if an IO error occurs.
      * @see #normalizeAddress(FileAddress)
@@ -80,7 +80,7 @@ public final class FileAddressManager {
         final FileAddress normalized = normalizeAddress(address);
 
         if (undefinedAddress.equals(normalized)) {
-            throw new HDF5jException.FileAddressException(address, " cannot be used to seek");
+            throw new FileAddressException(address, " cannot be used to seek");
         }
 
         byteChannel.position(normalized.position);
@@ -96,7 +96,7 @@ public final class FileAddressManager {
      *
      * @return normalized address.
      *
-     * @throws HDF5jException.FileAddressException if there is a problem encoding the address.
+     * @throws FileAddressException if there is a problem encoding the address.
      * @see #normalizeAddress(FileAddress)
      */
     public FileAddress encodeAddress(final FileAddress address, final ByteBuffer buffer) {
@@ -122,7 +122,7 @@ public final class FileAddressManager {
      *
      * @return new file address parsed from the buffer; {@link #getUndefinedAddress()} if undefined.
      *
-     * @throws HDF5jException.FileAddressException if there is a problem parsing the address.
+     * @throws FileAddressException if there is a problem parsing the address.
      */
     public FileAddress decodeAddress(final ByteBuffer buffer) {
         Preconditions.checkArgument(buffer != null, "null buffer");
@@ -142,7 +142,7 @@ public final class FileAddressManager {
      *
      * @return new file address for the position.
      *
-     * @throws HDF5jException.FileAddressException if there is a problem converting the address.
+     * @throws FileAddressException if there is a problem converting the address.
      */
     public FileAddress decodeAddress(final long filePosition) {
         Preconditions.checkArgument(filePosition >= -1,
@@ -161,7 +161,7 @@ public final class FileAddressManager {
             buffer.put(convertedArray);
             return new FileAddress(buffer.array());
         } else {
-            throw new HDF5jException.FileAddressException(
+            throw new FileAddressException(
                     "Position " + filePosition + " cannot be be encoded with " + this);
         }
     }
@@ -173,7 +173,7 @@ public final class FileAddressManager {
      *
      * @return normalized file address (may be the same object).
      *
-     * @throws HDF5jException.FileAddressException if the address cannot be normalized with this
+     * @throws FileAddressException if the address cannot be normalized with this
      *                                             manager.
      */
     public FileAddress normalizeAddress(final FileAddress address) {
@@ -190,9 +190,9 @@ public final class FileAddressManager {
 
         try {
             return decodeAddress(address.position);
-        } catch (HDF5jException.FileAddressException e) {
+        } catch (FileAddressException e) {
             // rethrow to include in the message the address format
-            throw new HDF5jException.FileAddressException(address, e.getMessage());
+            throw new FileAddressException(address, e.getMessage());
         }
     }
 

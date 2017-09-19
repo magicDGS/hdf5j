@@ -1,6 +1,6 @@
 package org.magicdgs.hdf5j.fileformat.address;
 
-import org.magicdgs.hdf5j.utils.HDF5jException;
+import org.magicdgs.hdf5j.utils.exceptions.FileAddressException;
 
 import org.mockito.Mockito;
 import org.testng.Assert;
@@ -162,7 +162,7 @@ public class FileAddressManagerUnitTest {
         Assert.assertNotSame(manager.normalizeAddress(intAddress), intAddress);
         Assert.assertEquals(manager.normalizeAddress(intAddress), intAddress);
         // this should throw
-        Assert.assertThrows(HDF5jException.FileAddressException.class,
+        Assert.assertThrows(FileAddressException.class,
                 () -> manager.normalizeAddress(longAddress));
     }
 
@@ -172,7 +172,7 @@ public class FileAddressManagerUnitTest {
         new FileAddressManager(4).seek(null, null);
     }
 
-    @Test(expectedExceptions = HDF5jException.FileAddressException.class)
+    @Test(expectedExceptions = FileAddressException.class)
     public void testCannotSeekUndefinedAddress() throws Exception {
         final FileAddressManager manager = new FileAddressManager(4);
         manager.seek(Mockito.mock(SeekableByteChannel.class), manager.getUndefinedAddress());

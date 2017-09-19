@@ -1,6 +1,6 @@
 package org.magicdgs.hdf5j.fileformat.address;
 
-import org.magicdgs.hdf5j.utils.HDF5jException;
+import org.magicdgs.hdf5j.utils.exceptions.FileAddressException;
 
 import org.testng.Assert;
 import org.testng.annotations.DataProvider;
@@ -78,7 +78,7 @@ public class FileAddressUnitTest {
         };
     }
 
-    @Test(dataProvider = "invalidAddress", expectedExceptions = HDF5jException.FileAddressException.class)
+    @Test(dataProvider = "invalidAddress", expectedExceptions = FileAddressException.class)
     public void testInvalidFileAddress(final byte[] bytes) throws Exception {
         new FileAddress(bytes);
     }
