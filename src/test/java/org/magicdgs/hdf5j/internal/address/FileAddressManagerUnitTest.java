@@ -1,28 +1,19 @@
-package org.magicdgs.hdf5j.fileformat.address;
+package org.magicdgs.hdf5j.internal.address;
 
+import org.magicdgs.hdf5j.HDF5jTest;
+import org.magicdgs.hdf5j.fileformat.FileAddress;
 import org.magicdgs.hdf5j.utils.exceptions.FileAddressException;
 
-import org.mockito.Mockito;
 import org.testng.Assert;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import java.nio.ByteBuffer;
-import java.nio.channels.SeekableByteChannel;
 
 /**
  * @author Daniel Gomez-Sanchez (magicDGS)
  */
-public class FileAddressManagerUnitTest {
-
-    @Test
-    public void testValidateAddress() throws Exception {
-        final FileAddressManager manager = new FileAddressManager(10);
-        // check that do not throw any exception for the same number of bytes
-        manager.normalizeAddress(new FileAddress(new byte[10]));
-        // do not throw an exception for less bytes
-        manager.normalizeAddress(new FileAddress(new byte[5]));
-    }
+public class FileAddressManagerUnitTest extends HDF5jTest {
 
     @DataProvider
     public Object[][] undefineAddressSizes() {
@@ -32,8 +23,8 @@ public class FileAddressManagerUnitTest {
     @Test(dataProvider = "undefineAddressSizes")
     public void testUndefinedAddress(final int size) throws Exception {
         FileAddressManager manager = new FileAddressManager(size);
-        Assert.assertEquals(manager.getUndefinedAddress().bytes.length, size);
-        Assert.assertEquals(manager.getUndefinedAddress().position, -1);
+        Assert.assertEquals(manager.getUndefinedAddress().getNumberOfBytes(), size);
+        Assert.assertEquals(manager.getUndefinedAddress().getFilePointer(), -1);
     }
 
     @DataProvider
@@ -56,8 +47,8 @@ public class FileAddressManagerUnitTest {
         buffer.rewind();
         final FileAddressManager manager = new FileAddressManager(size);
         final FileAddress address = manager.decodeAddress(buffer);
-        Assert.assertEquals(address.bytes.length, size);
-        Assert.assertEquals(address.position, position);
+        Assert.assertEquals(address.getNumberOfBytes(), size);
+        Assert.assertEquals(address.getFilePointer(), position);
         // check that the buffer is consumed
         Assert.assertFalse(buffer.hasRemaining());
     }
@@ -80,8 +71,8 @@ public class FileAddressManagerUnitTest {
             throws Exception {
         final FileAddressManager manager = new FileAddressManager(size);
         final FileAddress address = manager.decodeAddress(position);
-        Assert.assertEquals(address.bytes.length, size);
-        Assert.assertEquals(address.position, position);
+        Assert.assertEquals(address.getNumberOfBytes(), size);
+        Assert.assertEquals(address.getFilePointer(), position);
     }
 
     @Test
@@ -91,7 +82,7 @@ public class FileAddressManagerUnitTest {
         final ByteBuffer buffer = ByteBuffer.allocate(Long.BYTES);
         // encode first as a int
         FileAddressManager manager = new FileAddressManager(Integer.BYTES);
-        final FileAddress address = new FileAddress(
+        final FileAddress address = new FileAddressImpl(
                 ByteBuffer.allocate(manager.getAddressSize()).putInt(position).array());
         manager.encodeAddress(address, buffer);
         buffer.flip();
@@ -118,7 +109,7 @@ public class FileAddressManagerUnitTest {
 
     @Test(dataProvider = "illegalEncodeArguments", expectedExceptions = IllegalArgumentException.class)
     public void testIllegalEncodeAddress(final FileAddressManager manager,
-            final FileAddress address, final ByteBuffer buffer) throws Exception {
+            final FileAddressImpl address, final ByteBuffer buffer) throws Exception {
         manager.encodeAddress(address, buffer);
     }
 
@@ -149,33 +140,27 @@ public class FileAddressManagerUnitTest {
         final FileAddressManager manager = new FileAddressManager(4);
 
         // an undefined address can always be encoded, without throwing
-        final FileAddress undefined = new FileAddress(new byte[] {-1, -1, -1, -1, -1});
+        final FileAddress undefined = new FileAddressImpl(new byte[] {-1, -1, -1, -1, -1});
+        // an integer encoded with 4 bytes (the same size)
+        final FileAddress intEncoded = new FileAddressImpl(new byte[] {0, 1, 1, 1});
         // an integer encoded with 5 bytes, but it is padded by 0
-        final FileAddress intAddress = new FileAddress(new byte[] {0, 1, -1, 1, 1});
+        // TODO: should we really accept this?
+        final FileAddress intAddress = new FileAddressImpl(new byte[] {0, 1, -1, 1, 1});
         // a long encoded with only 5 bytes, because the rest are not important
         // this do not fits into an int manager, so it should throw
-        final FileAddress longAddress = new FileAddress(new byte[] {1, 1, -1, 1, 1});
+        final FileAddress longAddress = new FileAddressImpl(new byte[] {1, 1, -1, 1, 1});
 
         // returns the cached undefined (same object)
         Assert.assertSame(manager.normalizeAddress(undefined), manager.getUndefinedAddress());
+        // returns the same address if it is already properly encoded
+        Assert.assertSame(manager.normalizeAddress(intEncoded), intEncoded);
+
         // returns not the same object, but equals
         Assert.assertNotSame(manager.normalizeAddress(intAddress), intAddress);
         Assert.assertEquals(manager.normalizeAddress(intAddress), intAddress);
         // this should throw
         Assert.assertThrows(FileAddressException.class,
                 () -> manager.normalizeAddress(longAddress));
-    }
-
-
-    @Test(expectedExceptions = IllegalArgumentException.class)
-    public void testNullChannelForSeek() throws Exception {
-        new FileAddressManager(4).seek(null, null);
-    }
-
-    @Test(expectedExceptions = FileAddressException.class)
-    public void testCannotSeekUndefinedAddress() throws Exception {
-        final FileAddressManager manager = new FileAddressManager(4);
-        manager.seek(Mockito.mock(SeekableByteChannel.class), manager.getUndefinedAddress());
     }
 
 }

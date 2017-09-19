@@ -1,13 +1,12 @@
-package org.magicdgs.hdf5j.fileformat.address;
+package org.magicdgs.hdf5j.internal.address;
 
+import org.magicdgs.hdf5j.fileformat.FileAddress;
 import org.magicdgs.hdf5j.utils.exceptions.FileAddressException;
 
 import com.google.common.base.Preconditions;
 
-import java.io.IOException;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
-import java.nio.channels.SeekableByteChannel;
 import java.util.stream.IntStream;
 
 /**
@@ -33,12 +32,8 @@ public final class FileAddressManager {
      * @param addressSize the number of bytes to use to encode the address sizes.
      */
     public FileAddressManager(int addressSize) {
-        // get the undefined byte[] array to cache an undefined address
-        final byte[] undefinedBytes = new byte[addressSize];
-        for (int i = 0; i < addressSize; i++) {
-            undefinedBytes[i] = -1;
-        }
-        this.undefinedAddress = new FileAddress(undefinedBytes);
+        // cache an undefined address
+        this.undefinedAddress = FileAddressImpl.getUndefinedAddressForSize(addressSize);
         this.addressSize = addressSize;
     }
 
@@ -61,34 +56,6 @@ public final class FileAddressManager {
     }
 
     /**
-     * Seeks the byte chanel to the provided file address.
-     *
-     * @param byteChannel channel to seek.
-     * @param address     file address to set the pointer to.
-     *
-     * @return normalized file address representing the current position of the byte channel.
-     *
-     * @throws FileAddressException if the address cannot be handled or it is
-     *                                             undefined.
-     * @throws IOException                         if an IO error occurs.
-     * @see #normalizeAddress(FileAddress)
-     */
-    public FileAddress seek(final SeekableByteChannel byteChannel, final FileAddress address)
-            throws IOException {
-        Preconditions.checkArgument(byteChannel != null, "null byteChannel");
-
-        final FileAddress normalized = normalizeAddress(address);
-
-        if (undefinedAddress.equals(normalized)) {
-            throw new FileAddressException(address, " cannot be used to seek");
-        }
-
-        byteChannel.position(normalized.position);
-
-        return normalized;
-    }
-
-    /**
      * Encodes the provided address into the {@link ByteBuffer}.
      *
      * @param address address to encode.
@@ -108,7 +75,7 @@ public final class FileAddressManager {
 
         // normalize the address and put the bytes in the buffer
         final FileAddress normalized = normalizeAddress(address);
-        buffer.put(normalized.bytes);
+        buffer.put(normalized.asByteArray());
         // return the normalized address
         return normalized;
     }
@@ -130,7 +97,7 @@ public final class FileAddressManager {
                 "at least %s should be available in the provided byte buffer", addressSize);
         final byte[] bytes = new byte[addressSize];
         buffer.get(bytes);
-        final FileAddress address = new FileAddress(bytes);
+        final FileAddress address = new FileAddressImpl(bytes);
         // return always the cached undefinedAddress to avoid storage of the same object
         return (undefinedAddress.equals(address)) ? undefinedAddress : address;
     }
@@ -147,19 +114,19 @@ public final class FileAddressManager {
     public FileAddress decodeAddress(final long filePosition) {
         Preconditions.checkArgument(filePosition >= -1,
                 "file position cannot be negative (%s) except for undefined address (%s)",
-                filePosition, undefinedAddress.position);
+                filePosition, undefinedAddress.getFilePointer());
         final byte[] convertedArray = BigInteger.valueOf(filePosition).toByteArray();
         if (filePosition == -1) {
             return undefinedAddress;
         } else if (convertedArray.length == addressSize) {
-            return new FileAddress(convertedArray);
+            return new FileAddressImpl(convertedArray);
         } else if (convertedArray.length < addressSize) {
             final ByteBuffer buffer = ByteBuffer.allocate(addressSize);
             // pad the byte array with zeroes at the beginning to get the same position encoded with more bytes
             IntStream.range(convertedArray.length, addressSize).forEach(i -> buffer.put((byte) 0));
             // put the address bytes into the buffer
             buffer.put(convertedArray);
-            return new FileAddress(buffer.array());
+            return new FileAddressImpl(buffer.array());
         } else {
             throw new FileAddressException(
                     "Position " + filePosition + " cannot be be encoded with " + this);
@@ -174,7 +141,7 @@ public final class FileAddressManager {
      * @return normalized file address (may be the same object).
      *
      * @throws FileAddressException if the address cannot be normalized with this
-     *                                             manager.
+     *                              manager.
      */
     public FileAddress normalizeAddress(final FileAddress address) {
         Preconditions.checkArgument(address != null, "null address");
@@ -184,12 +151,12 @@ public final class FileAddressManager {
             return undefinedAddress;
         }
 
-        if (address.bytes.length == getAddressSize()) {
+        if (address.getNumberOfBytes() == getAddressSize()) {
             return address;
         }
 
         try {
-            return decodeAddress(address.position);
+            return decodeAddress(address.getFilePointer());
         } catch (FileAddressException e) {
             // rethrow to include in the message the address format
             throw new FileAddressException(address, e.getMessage());

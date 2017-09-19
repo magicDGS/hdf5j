@@ -1,7 +1,7 @@
 package org.magicdgs.hdf5j.fileformat.level0;
 
+import org.magicdgs.hdf5j.fileformat.FileAddress;
 import org.magicdgs.hdf5j.fileformat.HDF5FileBlock;
-import org.magicdgs.hdf5j.fileformat.address.FileAddress;
 import org.magicdgs.hdf5j.utils.exceptions.SuperblockVersionException;
 
 /**
@@ -284,7 +284,7 @@ public interface Superblock extends HDF5FileBlock {
      * @throws SuperblockVersionException if the version
      *                                                                            does not support
      *                                                                            this field.
-     * @see org.magicdgs.hdf5j.fileformat.address.FileAddressManager#getUndefinedAddress()
+     * @see org.magicdgs.hdf5j.internal.address.FileAddressManager
      */
     public FileAddress getAddressOfGlobalFreeSpaceIndex();
 

@@ -1,6 +1,6 @@
 package org.magicdgs.hdf5j.utils.exceptions;
 
-import org.magicdgs.hdf5j.fileformat.address.FileAddress;
+import org.magicdgs.hdf5j.fileformat.FileAddress;
 
 /**
  * Exception class for issues related with {@link FileAddress}.
@@ -52,6 +52,6 @@ public class FileAddressException extends HDF5jException {
 
     // helper method for format the message
     private static final String formatMessage(final FileAddress address, final String msg) {
-        return String.format("%s %s", address, msg);
+        return String.format("%s: %s", address.hexDisplay(), msg);
     }
 }
