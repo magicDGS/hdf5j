@@ -20,8 +20,7 @@ public interface HDF5FileBlock {
      * @return unsigned byte representing the version number of the block.
      *
      * @implNote all byte/short fields returns an {@link int} because they are represented as
-     * unsigned
-     * bytes.
+     * unsigned bytes.
      */
     public int getVersionNumber();
 

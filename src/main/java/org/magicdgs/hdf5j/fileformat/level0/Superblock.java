@@ -2,6 +2,7 @@ package org.magicdgs.hdf5j.fileformat.level0;
 
 import org.magicdgs.hdf5j.fileformat.HDF5FileBlock;
 import org.magicdgs.hdf5j.fileformat.address.FileAddress;
+import org.magicdgs.hdf5j.fileformat.level1.freespacemanager.FreeSpaceManagerHeader;
 import org.magicdgs.hdf5j.utils.exceptions.SuperblockVersionException;
 
 /**
@@ -78,8 +79,8 @@ public interface Superblock extends HDF5FileBlock {
      *                                                                            does not support
      *                                                                            this field.
      * @see org.magicdgs.hdf5j.HDF5Constants#FREE_SPACE_MANAGER_VERSION_NUMBER
+     * @see FreeSpaceManagerHeader
      */
-    // TODO: add link to Free-space Manager class once it is implemented
     public int getFreeSpaceManagerVersionNumber();
 
     /**
