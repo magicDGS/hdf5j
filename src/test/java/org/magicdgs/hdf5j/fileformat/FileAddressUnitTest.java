@@ -16,6 +16,8 @@ import java.nio.channels.SeekableByteChannel;
  */
 public class FileAddressUnitTest extends HDF5jTest {
 
+
+
     @DataProvider
     public Object[][] hexDisplayData() {
         return new Object[][] {
@@ -44,7 +46,7 @@ public class FileAddressUnitTest extends HDF5jTest {
         final FileAddress address = Mockito.mock(FileAddress.class);
         Mockito.when(address.hexDisplay()).thenCallRealMethod();
         // using the address bytes
-        Mockito.when(address.asByteArray()).thenReturn(addressBytes);
+        Mockito.when(address.asByteArray(Mockito.anyInt())).thenReturn(addressBytes);
         Assert.assertEquals(address.hexDisplay(), expected);
     }
 
@@ -60,6 +62,9 @@ public class FileAddressUnitTest extends HDF5jTest {
         // mock the return value of getFilePointer() to be a proper value
         Mockito.when(address.getFilePointer()).thenReturn(10L);
         Assert.assertFalse(address.isUndefinded());
+
+        // test the real undefined address
+        Assert.assertTrue(FileAddress.UNDEFINED_ADDRESS.isUndefinded());
     }
 
     @Test

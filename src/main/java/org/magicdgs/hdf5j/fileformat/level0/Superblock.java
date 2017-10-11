@@ -284,7 +284,7 @@ public interface Superblock extends HDF5FileBlock {
      * @throws SuperblockVersionException if the version
      *                                                                            does not support
      *                                                                            this field.
-     * @see org.magicdgs.hdf5j.internal.address.FileAddressManager
+     * @see FileAddress#UNDEFINED_ADDRESS
      */
     public FileAddress getAddressOfGlobalFreeSpaceIndex();
 

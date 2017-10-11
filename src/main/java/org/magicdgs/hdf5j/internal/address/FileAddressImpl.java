@@ -6,7 +6,9 @@ import org.magicdgs.hdf5j.utils.exceptions.FileAddressException;
 import com.google.common.base.Preconditions;
 
 import java.math.BigInteger;
+import java.nio.ByteBuffer;
 import java.util.Arrays;
+import java.util.stream.IntStream;
 
 /**
  * Internal implementation of {@link FileAddress}.
@@ -47,6 +49,11 @@ public final class FileAddressImpl implements FileAddress {
         this(bytes, getLongValue(bytes));
     }
 
+
+    FileAddressImpl(final long position, final int numberOfBytes) {
+        this(getBytesFromPostion(position, numberOfBytes), position);
+    }
+
     /**
      * Gets the undefined address for a concrete number of bytes. The undefined address is the
      * one with all the bytes unset.
@@ -56,10 +63,37 @@ public final class FileAddressImpl implements FileAddress {
      * @return new undefined address.
      */
     public static FileAddressImpl getUndefinedAddressForSize(final int size) {
-        final byte[] undefinedBytes = new byte[size];
-        Arrays.fill(undefinedBytes, (byte) -1);
-        // use the private constructor to avoid iterating over all undefined bytes
-        return new FileAddressImpl(undefinedBytes, -1);
+        // use the default undefined address implementation
+        return new FileAddressImpl(
+                FileAddress.UNDEFINED_ADDRESS.asByteArray(size),
+                FileAddress.UNDEFINED_FILE_POINTER);
+    }
+
+    private static byte[] getBytesFromPostion(final long filePosition, final int size) {
+        Preconditions.checkArgument(filePosition >= -1,
+                "file position cannot be negative (%s) except for undefined address (%s)",
+                filePosition, FileAddress.UNDEFINED_FILE_POINTER);
+        // if the file position is the undefined one, return directly the undefined bytes
+        if (filePosition == FileAddress.UNDEFINED_FILE_POINTER) {
+            return FileAddress.UNDEFINED_ADDRESS.asByteArray(size);
+        }
+
+        // convert the array with BigInteger
+        final byte[] convertedArray = BigInteger.valueOf(filePosition).toByteArray();
+
+        if (convertedArray.length == size) {
+            // return the converted array
+            return convertedArray;
+        } else if (convertedArray.length < size) {
+            final ByteBuffer buffer = ByteBuffer.allocate(size);
+            // pad the byte array with zeroes at the beginning to get the same position encoded with more bytes
+            IntStream.range(convertedArray.length, size).forEach(i -> buffer.put((byte) 0));
+            // put the address bytes into the buffer
+            buffer.put(convertedArray);
+            return buffer.array();
+        } else {
+            throw new FileAddressException("Position " + filePosition + " cannot be be encoded with " + size + " bytes");
+        }
     }
 
     // helper method to check if all the bytes are unset
@@ -87,13 +121,22 @@ public final class FileAddressImpl implements FileAddress {
     }
 
     @Override
-    public int getNumberOfBytes() {
-        return bytes.length;
+    public byte[] asByteArray(int numberOfBytes) {
+        if (numberOfBytes != bytes.length) {
+            bytes = getBytesFromPostion(position, numberOfBytes);
+        }
+        return bytes;
     }
 
     @Override
-    public byte[] asByteArray() {
-        return bytes;
+    public String hexDisplay() {
+        return FileAddress.hexDisplay(bytes);
+    }
+
+
+    /** Gets the number of bytes cached in this address. */
+    public int getNumberOfBytes() {
+        return bytes.length;
     }
 
     @Override
@@ -104,8 +147,6 @@ public final class FileAddressImpl implements FileAddress {
         if (!(o instanceof FileAddress)) {
             return false;
         }
-        // using the position to compare addresses instead of the bytes
-        // this will allow to change the number of bytes to encode an address
         return this.getFilePointer() == ((FileAddress) o).getFilePointer();
     }
 

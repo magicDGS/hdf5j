@@ -6,6 +6,8 @@ import com.google.common.base.Preconditions;
 
 import java.io.IOException;
 import java.nio.channels.SeekableByteChannel;
+import java.util.Arrays;
+import java.util.Objects;
 
 /**
  * Representation of a file address (position to seek).
@@ -16,6 +18,41 @@ public interface FileAddress {
 
     /** Value for {@link #getFilePointer()} for the undefined address. */
     public static final long UNDEFINED_FILE_POINTER = -1;
+
+    /** Simple implementation of undefined address. */
+    public static final FileAddress UNDEFINED_ADDRESS = new FileAddress() {
+
+        /** Returns {@link #UNDEFINED_FILE_POINTER}. */
+        @Override
+        public long getFilePointer() {
+            return UNDEFINED_FILE_POINTER;
+        }
+
+        /** Returns a fresh byte[] where every byte is set to -1. */
+        @Override
+        public byte[] asByteArray(int numberOfBytes) {
+            final byte[] undefinedBytes = new byte[numberOfBytes];
+            Arrays.fill(undefinedBytes, (byte) -1);
+            return undefinedBytes;
+        }
+
+        @Override
+        public boolean equals(final Object obj) {
+            if (this == obj) {
+                return true;
+            }
+            if (!(obj instanceof FileAddress)) {
+                return false;
+            }
+
+            return  this.getFilePointer() == ((FileAddress) obj).getFilePointer();
+        }
+
+        @Override
+        public int hashCode() {
+            return Long.hashCode(getFilePointer());
+        }
+    };
 
     /**
      * Gets the file pointer for this address.
@@ -29,36 +66,28 @@ public interface FileAddress {
     public long getFilePointer();
 
     /**
-     * Gets the byte array representation for this address, in big-endian order.
-     *
-     * <p>The length of the array should be the same as the value returned by
-     * {@link #getNumberOfBytes()}.
+     * Gets the byte array representation for this address, in big-endian order,
      *
      * <p><b>WARNING</b>: implementations of this method are not forced to return an unmodifiable
      * byte array. Do not modify the returned array unless sub-classes specify that it is safe.
      *
      * @return byte array in big-endian order to encode the address.
+     * @throws org.magicdgs.hdf5j.utils.exceptions.FileAddressException if the address cannot be encoded with this number of bytes.
      */
-    public byte[] asByteArray();
-
-
-    /**
-     * Gets the number of bytes used to encode this file address into a byte array with {@link
-     * #asByteArray()}.
-     *
-     * @return the number of bytes used to encode this file address position.
-     */
-    public int getNumberOfBytes();
+    public byte[] asByteArray(final int numberOfBytes);
 
     /**
      * Returns the hexadecimal representation of the address from the byte array.
      *
-     * <p>Default implementation calls {@code hexDisplay(asByteArray())}.
+     * <p>Default implementation calls {@code hexDisplay(asByteArray(Long.BYTES))}, but this could
+     * throw for implementations caching the byte array.
      *
      * @return address hexadecimal representation.
+     * @implNote it is recommended to use {@link #hexDisplay(byte[])} for a common representation
+     * of the addresses in an implementation-independent manner.
      */
     public default String hexDisplay() {
-        return hexDisplay(asByteArray());
+        return hexDisplay(asByteArray(Long.BYTES));
     }
 
     /**
@@ -98,7 +127,7 @@ public interface FileAddress {
     /**
      * Displays the hexadecimal representation for a file address.
      *
-     * @param addressBytes bytes of the address (as returned by {@link #asByteArray()}.
+     * @param addressBytes bytes of the address (as returned by {@link #asByteArray(int)}.
      *
      * @return address in hexadecimal representation.
      */
@@ -130,6 +159,7 @@ public interface FileAddress {
      * {@inheritDoc}
      *
      * @implNote this method should include only the value returned by {@link #getFilePointer()}.
+     * It is recommended to use {@link Long#hashCode(long)} for the file pointer.
      */
     @Override
     public int hashCode();

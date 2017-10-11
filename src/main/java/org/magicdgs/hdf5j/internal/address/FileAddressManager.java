@@ -61,23 +61,18 @@ public final class FileAddressManager {
      * @param address address to encode.
      * @param buffer  buffer to put the address bytes.
      *
-     * @return normalized address.
-     *
      * @throws FileAddressException if there is a problem encoding the address.
-     * @see #normalizeAddress(FileAddress)
      */
-    public FileAddress encodeAddress(final FileAddress address, final ByteBuffer buffer) {
+    public void encodeAddress(final FileAddress address, final ByteBuffer buffer) {
+        Preconditions.checkArgument(address != null, "null address");
         Preconditions.checkArgument(buffer != null, "null buffer");
         // for encoding, we require to be able to write at least addressSize bytes
         Preconditions.checkArgument(buffer.remaining() >= addressSize,
                 "required at least %s bytes in the buffer to write an address (only %s)",
                 addressSize, buffer.remaining());
 
-        // normalize the address and put the bytes in the buffer
-        final FileAddress normalized = normalizeAddress(address);
-        buffer.put(normalized.asByteArray());
-        // return the normalized address
-        return normalized;
+        // put the address byte[] array
+        buffer.put(address.asByteArray(addressSize));
     }
 
     /**
@@ -112,55 +107,10 @@ public final class FileAddressManager {
      * @throws FileAddressException if there is a problem converting the address.
      */
     public FileAddress decodeAddress(final long filePosition) {
-        Preconditions.checkArgument(filePosition >= -1,
-                "file position cannot be negative (%s) except for undefined address (%s)",
-                filePosition, undefinedAddress.getFilePointer());
-        final byte[] convertedArray = BigInteger.valueOf(filePosition).toByteArray();
-        if (filePosition == -1) {
-            return undefinedAddress;
-        } else if (convertedArray.length == addressSize) {
-            return new FileAddressImpl(convertedArray);
-        } else if (convertedArray.length < addressSize) {
-            final ByteBuffer buffer = ByteBuffer.allocate(addressSize);
-            // pad the byte array with zeroes at the beginning to get the same position encoded with more bytes
-            IntStream.range(convertedArray.length, addressSize).forEach(i -> buffer.put((byte) 0));
-            // put the address bytes into the buffer
-            buffer.put(convertedArray);
-            return new FileAddressImpl(buffer.array());
-        } else {
-            throw new FileAddressException(
-                    "Position " + filePosition + " cannot be be encoded with " + this);
-        }
-    }
-
-    /**
-     * Normalizes the address by encoding with the manager address size ({@link #getAddressSize()}).
-     *
-     * @param address the address to normalize.
-     *
-     * @return normalized file address (may be the same object).
-     *
-     * @throws FileAddressException if the address cannot be normalized with this
-     *                              manager.
-     */
-    public FileAddress normalizeAddress(final FileAddress address) {
-        Preconditions.checkArgument(address != null, "null address");
-
-        // for undefined address, it should return the same
-        if (undefinedAddress.equals(address)) {
+        if (undefinedAddress.getFilePointer() == filePosition) {
             return undefinedAddress;
         }
-
-        if (address.getNumberOfBytes() == getAddressSize()) {
-            return address;
-        }
-
-        try {
-            return decodeAddress(address.getFilePointer());
-        } catch (FileAddressException e) {
-            // rethrow to include in the message the address format
-            throw new FileAddressException(address, e.getMessage());
-        }
+        return new FileAddressImpl(filePosition, addressSize);
     }
 
     @Override

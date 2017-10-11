@@ -23,7 +23,7 @@ public class FileAddressManagerUnitTest extends HDF5jTest {
     @Test(dataProvider = "undefineAddressSizes")
     public void testUndefinedAddress(final int size) throws Exception {
         FileAddressManager manager = new FileAddressManager(size);
-        Assert.assertEquals(manager.getUndefinedAddress().getNumberOfBytes(), size);
+        Assert.assertEquals(((FileAddressImpl) manager.getUndefinedAddress()).getNumberOfBytes(), size);
         Assert.assertEquals(manager.getUndefinedAddress().getFilePointer(), -1);
     }
 
@@ -47,7 +47,7 @@ public class FileAddressManagerUnitTest extends HDF5jTest {
         buffer.rewind();
         final FileAddressManager manager = new FileAddressManager(size);
         final FileAddress address = manager.decodeAddress(buffer);
-        Assert.assertEquals(address.getNumberOfBytes(), size);
+        Assert.assertEquals(((FileAddressImpl) address).getNumberOfBytes(), size);
         Assert.assertEquals(address.getFilePointer(), position);
         // check that the buffer is consumed
         Assert.assertFalse(buffer.hasRemaining());
@@ -71,7 +71,7 @@ public class FileAddressManagerUnitTest extends HDF5jTest {
             throws Exception {
         final FileAddressManager manager = new FileAddressManager(size);
         final FileAddress address = manager.decodeAddress(position);
-        Assert.assertEquals(address.getNumberOfBytes(), size);
+        Assert.assertEquals(((FileAddressImpl) address).getNumberOfBytes(), size);
         Assert.assertEquals(address.getFilePointer(), position);
     }
 
@@ -133,34 +133,6 @@ public class FileAddressManagerUnitTest extends HDF5jTest {
     @Test(expectedExceptions = IllegalArgumentException.class)
     public void testIllegalDecodeAddressFromLong() throws Exception {
         new FileAddressManager(4).decodeAddress(-2);
-    }
-
-    @Test
-    public void testNormalizeAddress() throws Exception {
-        final FileAddressManager manager = new FileAddressManager(4);
-
-        // an undefined address can always be encoded, without throwing
-        final FileAddress undefined = new FileAddressImpl(new byte[] {-1, -1, -1, -1, -1});
-        // an integer encoded with 4 bytes (the same size)
-        final FileAddress intEncoded = new FileAddressImpl(new byte[] {0, 1, 1, 1});
-        // an integer encoded with 5 bytes, but it is padded by 0
-        // TODO: should we really accept this?
-        final FileAddress intAddress = new FileAddressImpl(new byte[] {0, 1, -1, 1, 1});
-        // a long encoded with only 5 bytes, because the rest are not important
-        // this do not fits into an int manager, so it should throw
-        final FileAddress longAddress = new FileAddressImpl(new byte[] {1, 1, -1, 1, 1});
-
-        // returns the cached undefined (same object)
-        Assert.assertSame(manager.normalizeAddress(undefined), manager.getUndefinedAddress());
-        // returns the same address if it is already properly encoded
-        Assert.assertSame(manager.normalizeAddress(intEncoded), intEncoded);
-
-        // returns not the same object, but equals
-        Assert.assertNotSame(manager.normalizeAddress(intAddress), intAddress);
-        Assert.assertEquals(manager.normalizeAddress(intAddress), intAddress);
-        // this should throw
-        Assert.assertThrows(FileAddressException.class,
-                () -> manager.normalizeAddress(longAddress));
     }
 
 }
