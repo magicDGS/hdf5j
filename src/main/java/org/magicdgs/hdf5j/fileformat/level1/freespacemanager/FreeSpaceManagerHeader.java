@@ -50,7 +50,7 @@ public interface FreeSpaceManagerHeader extends HDF5FileBlock {
      *
      * @return unsigned byte representing the client ID.
      * @see FileSectionDataRecord#CLIENT_ID
-     * @see FractalHeapSectionDataRecord
+     * @see FractalHeapSectionDataRecord#CLIENT_ID
      */
     public int getClientID();
 

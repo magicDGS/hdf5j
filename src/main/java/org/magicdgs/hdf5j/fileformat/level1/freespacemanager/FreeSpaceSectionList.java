@@ -138,7 +138,6 @@ public interface FreeSpaceSectionList extends HDF5FileBlock {
      * @return unsigned byte representation
      * @see SectionDataRecord
      */
-    // TODO - maybe it should return an class name
     public int getRecordSetType(final int N, final int K);
 
 
@@ -150,6 +149,5 @@ public interface FreeSpaceSectionList extends HDF5FileBlock {
      *
      * @return TODO - documentation
      */
-    // TODO: change signature
     public SectionDataRecord getRecordSetData(final int N, final int K);
 }

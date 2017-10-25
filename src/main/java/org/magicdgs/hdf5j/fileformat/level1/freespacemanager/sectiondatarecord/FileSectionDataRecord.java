@@ -20,4 +20,16 @@ public interface FileSectionDataRecord extends SectionDataRecord {
     /** Type value for {@link FreeSpaceSectionList#getRecordSetType(int, int)}. */
     public static final int TYPE = 1;
 
+    /** Returns {@link #CLIENT_ID}. */
+    @Override
+    default public int getClientID() {
+        return CLIENT_ID;
+    }
+
+    /** Returns {@link #TYPE}. */
+    @Override
+    default public int getType() {
+        return TYPE;
+    }
+
 }

@@ -21,4 +21,10 @@ public interface FractalHeapSectionDataRecord extends SectionDataRecord {
     /** Client ID value for {@link FreeSpaceManagerHeader#getClientID()}. */
     public static final int CLIENT_ID = 0;
 
+    /** Returns {@link #CLIENT_ID}. */
+    @Override
+    default public int getClientID() {
+        return CLIENT_ID;
+    }
+
 }

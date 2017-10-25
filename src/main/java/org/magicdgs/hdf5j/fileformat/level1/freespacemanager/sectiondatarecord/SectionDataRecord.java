@@ -16,4 +16,9 @@ package org.magicdgs.hdf5j.fileformat.level1.freespacemanager.sectiondatarecord;
  */
 public interface SectionDataRecord {
 
+    // TODO - it is really necessary?
+    public int getType();
+
+    // TODO - it is really necessary?
+    public int getClientID();
 }

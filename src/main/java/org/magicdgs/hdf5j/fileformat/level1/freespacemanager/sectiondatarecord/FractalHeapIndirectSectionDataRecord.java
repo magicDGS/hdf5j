@@ -52,4 +52,10 @@ public interface FractalHeapIndirectSectionDataRecord extends FractalHeapSection
      * @return unsigned short representing the number of blocks.
      */
     public int getNumberOfBlocks();
+
+    /** Returns {@link #TYPE}. */
+    @Override
+    default public int getType() {
+        return TYPE;
+    }
 }

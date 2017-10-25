@@ -13,4 +13,10 @@ public interface FractalHeapNormalRowSectionDataRecord extends FractalHeapSectio
 
     /** Type value for {@link FreeSpaceSectionList#getRecordSetType(int, int)}. */
     public static final int TYPE = 2;
+
+    /** Returns {@link #TYPE}. */
+    @Override
+    default public int getType() {
+        return TYPE;
+    }
 }
