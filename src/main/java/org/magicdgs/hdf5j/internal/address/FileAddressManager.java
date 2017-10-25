@@ -5,9 +5,7 @@ import org.magicdgs.hdf5j.utils.exceptions.FileAddressException;
 
 import com.google.common.base.Preconditions;
 
-import java.math.BigInteger;
 import java.nio.ByteBuffer;
-import java.util.stream.IntStream;
 
 /**
  * Manager for file addresses encoded in an arbitrary number of bytes. The manager provides:

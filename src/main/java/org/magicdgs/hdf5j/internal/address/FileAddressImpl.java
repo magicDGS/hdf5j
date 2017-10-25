@@ -7,7 +7,6 @@ import com.google.common.base.Preconditions;
 
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
-import java.util.Arrays;
 import java.util.stream.IntStream;
 
 /**
@@ -27,7 +26,8 @@ public final class FileAddressImpl implements FileAddress {
 
     /**
      * Private constructor, which do not check if the bytes and position are in sync.
-     * @param bytes big-endian bytes representing a position in the file.
+     *
+     * @param bytes    big-endian bytes representing a position in the file.
      * @param position position representation.
      */
     private FileAddressImpl(final byte[] bytes, final long position) {
@@ -92,7 +92,8 @@ public final class FileAddressImpl implements FileAddress {
             buffer.put(convertedArray);
             return buffer.array();
         } else {
-            throw new FileAddressException("Position " + filePosition + " cannot be be encoded with " + size + " bytes");
+            throw new FileAddressException(
+                    "Position " + filePosition + " cannot be be encoded with " + size + " bytes");
         }
     }
 
@@ -100,7 +101,7 @@ public final class FileAddressImpl implements FileAddress {
     private final static long getLongValue(final byte[] bytes) {
         Preconditions.checkArgument(bytes != null, "null bytes");
         Preconditions.checkArgument(bytes.length != 0, "empty bytes");
-        
+
         for (int i = 0; i < bytes.length; i++) {
             if (bytes[i] != -1) {
                 final BigInteger bigInteger = new BigInteger(1, bytes);

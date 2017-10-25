@@ -7,7 +7,6 @@ import com.google.common.base.Preconditions;
 import java.io.IOException;
 import java.nio.channels.SeekableByteChannel;
 import java.util.Arrays;
-import java.util.Objects;
 
 /**
  * Representation of a file address (position to seek).
@@ -45,7 +44,7 @@ public interface FileAddress {
                 return false;
             }
 
-            return  this.getFilePointer() == ((FileAddress) obj).getFilePointer();
+            return this.getFilePointer() == ((FileAddress) obj).getFilePointer();
         }
 
         @Override
@@ -72,7 +71,10 @@ public interface FileAddress {
      * byte array. Do not modify the returned array unless sub-classes specify that it is safe.
      *
      * @return byte array in big-endian order to encode the address.
-     * @throws org.magicdgs.hdf5j.utils.exceptions.FileAddressException if the address cannot be encoded with this number of bytes.
+     *
+     * @throws org.magicdgs.hdf5j.utils.exceptions.FileAddressException if the address cannot be
+     *                                                                  encoded with this number of
+     *                                                                  bytes.
      */
     public byte[] asByteArray(final int numberOfBytes);
 
@@ -83,6 +85,7 @@ public interface FileAddress {
      * throw for implementations caching the byte array.
      *
      * @return address hexadecimal representation.
+     *
      * @implNote it is recommended to use {@link #hexDisplay(byte[])} for a common representation
      * of the addresses in an implementation-independent manner.
      */
@@ -105,9 +108,8 @@ public interface FileAddress {
     /**
      * Seeks the byte chanel to the file pointer position.
      *
-     *
-     * <p>Default implementation returns the byte channel after calling {@link
-     * SeekableByteChannel#position(long)} if the {@link FileAddress} is not undefined.
+     * <p>Default implementation returns the byte channel after calling
+     * {@link SeekableByteChannel#position(long)} if the {@link FileAddress} is not undefined.
      *
      * @param channel non-null channel to seek.
      *
@@ -142,8 +144,8 @@ public interface FileAddress {
     }
 
     /**
-     * Returns {@code true} if the two addresses point to the same position in the file; {@code
-     * false} otherwise.
+     * Returns {@code true} if the two addresses point to the same position in the file;
+     * {@code false} otherwise.
      *
      * @param obj the reference object with which to compare.
      *
