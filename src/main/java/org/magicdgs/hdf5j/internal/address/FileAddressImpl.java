@@ -135,7 +135,11 @@ public final class FileAddressImpl implements FileAddress {
     }
 
 
-    /** Gets the number of bytes cached in this address. */
+    /**
+     * Gets the number of bytes cached in this address.
+     *
+     * @return number of bytes cached in this address.
+     */
     public int getNumberOfBytes() {
         return bytes.length;
     }

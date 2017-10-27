@@ -70,6 +70,8 @@ public interface FileAddress {
      * <p><b>WARNING</b>: implementations of this method are not forced to return an unmodifiable
      * byte array. Do not modify the returned array unless sub-classes specify that it is safe.
      *
+     * @param numberOfBytes number of bytes used to encode this array.
+     *
      * @return byte array in big-endian order to encode the address.
      *
      * @throws org.magicdgs.hdf5j.utils.exceptions.FileAddressException if the address cannot be
